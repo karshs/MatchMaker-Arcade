@@ -2,9 +2,10 @@
 const { Pool } = require('pg');
 const { config } = require('./env');
 
+// Neon already includes sslmode=require in the connection string — no need to set ssl: {} separately
+// Setting both causes a deprecation warning from pg. Let the URL handle it.
 const pool = new Pool({
   connectionString: config.databaseUrl,
-  ssl: { rejectUnauthorized: false }, // Neon DB uses SSL on their proxy layer
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
