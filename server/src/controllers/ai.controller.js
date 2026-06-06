@@ -1,9 +1,16 @@
-// AI controller — fetches profiles, runs AI, caches result
-const { query } = require('../config/db');
-const { AppError } = require('../middleware/errorHandler');
+/**
+ * ai.controller.js
+ * ────────────────
+ * Fetches both profiles, generates AI insights, caches them in the matches table.
+ *
+ * POST /api/ai/insights
+ * Body: { customer_id, match_customer_id }
+ */
+
+const { query, pool } = require('../config/db');
+const { AppError }    = require('../middleware/errorHandler');
 const { generateInsights } = require('../services/aiInsights');
 
-// POST /api/ai/insights
 async function getInsights(req, res, next) {
   try {
     const { customer_id, match_customer_id } = req.body;
@@ -12,10 +19,17 @@ async function getInsights(req, res, next) {
       return next(new AppError('customer_id and match_customer_id are required.', 400));
     }
 
-    // Check if we already generated and cached insights for this pair
+    // ── Cache Lookup ────────────────────────────────────────────────────────────
+    // FIXED: Check BOTH orderings (A,B) and (B,A) so reversing the argument
+    // order doesn't cause a redundant OpenAI call. Match insights are symmetric.
     const cached = await query(
       `SELECT ai_insights FROM matches
-       WHERE customer_a_id = $1 AND customer_b_id = $2 AND ai_insights IS NOT NULL`,
+       WHERE ai_insights IS NOT NULL
+         AND (
+           (customer_a_id = $1 AND customer_b_id = $2) OR
+           (customer_a_id = $2 AND customer_b_id = $1)
+         )
+       LIMIT 1`,
       [customer_id, match_customer_id]
     );
 
@@ -23,11 +37,11 @@ async function getInsights(req, res, next) {
       return res.json({
         success: true,
         data: JSON.parse(cached[0].ai_insights),
-        cached: true, // frontend can show "Cached" badge
+        cached: true, // frontend can show a "Cached" badge
       });
     }
 
-    // Fetch both full profiles
+    // ── Fetch Both Profiles ─────────────────────────────────────────────────────
     const customers = await query(
       'SELECT * FROM customers WHERE id = ANY($1) AND is_active = TRUE',
       [[customer_id, match_customer_id]]
@@ -40,14 +54,20 @@ async function getInsights(req, res, next) {
     const customerA = customers.find(c => c.id === customer_id);
     const customerB = customers.find(c => c.id === match_customer_id);
 
-    // Generate insights (OpenAI or mock depending on config)
+    // ── Generate Insights ────────────────────────────────────────────────────────
+    // Calls OpenAI (or mock fallback) — never throws, always returns a valid object
     const insights = await generateInsights(customerA, customerB);
 
-    // Cache in matches table so we don't call OpenAI twice for the same pair
-    await query(
-      `UPDATE matches SET ai_insights = $1
-       WHERE customer_a_id = $2 AND customer_b_id = $3`,
-      [JSON.stringify(insights), customer_id, match_customer_id]
+    // ── Cache via UPSERT ─────────────────────────────────────────────────────────
+    // FIXED: Previously used a bare UPDATE which silently did nothing if the match
+    // row didn't exist yet (e.g., matchmaker previewing before saving).
+    // Now uses INSERT ... ON CONFLICT DO UPDATE so insights are always persisted.
+    await pool.query(
+      `INSERT INTO matches (customer_a_id, customer_b_id, score, ai_insights, status)
+       VALUES ($1, $2, $3, $4, 'Suggested')
+       ON CONFLICT (customer_a_id, customer_b_id)
+       DO UPDATE SET ai_insights = EXCLUDED.ai_insights`,
+      [customer_id, match_customer_id, insights.score, JSON.stringify(insights)]
     );
 
     res.json({ success: true, data: insights, cached: false });
