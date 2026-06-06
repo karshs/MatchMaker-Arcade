@@ -5,9 +5,11 @@
  * Receives customer objects, returns ranked matches.
  *
  * Two phases:
- *   1. Hard Filters  — eliminates incompatible candidates (binary pass/fail)
- *                      All checks are now BILATERAL (enforced in both directions).
- *   2. Scorer        — awards 0-100 points (gender-specific scorers — see Phase 2A/2B)
+ *   1. Hard Filters      — eliminates incompatible candidates (binary pass/fail)
+ *                          All checks are BILATERAL (enforced in both directions).
+ *   2. Gender Scorers    — two separate scorers for realistic Indian matrimonial logic
+ *        2A. scoreMaleCustomer   — weights age gap, height, income direction, values
+ *        2B. scoreFemaleCustomer — weights values, profession sector, relocation, timeline
  */
 
 // ── Age Helper ─────────────────────────────────────────────────────────────────
@@ -131,10 +133,114 @@ function hardFilter(customer, candidate) {
   return { passed: true };
 }
 
-// ── PHASE 2: Scorer (placeholder — gender-specific scorers added in next commits) ──
+// ── PHASE 2A: Male Customer Scorer ───────────────────────────────────────────
+// customer = Male, candidate = Female. Total: 100 pts.
+//
+// Based on Indian matrimonial norms (Shaadi.com / Jeevansathi research):
+// Males primarily seek: a younger partner, shared children vision, the male
+// being taller, lifestyle harmony, and themselves being the primary earner.
+
+function scoreMaleCustomer(male, female) {
+  const breakdown = {
+    children_preference: 0,  // max 20 — shared vision on family
+    age_gap:             0,  // max 15 — female younger is the norm
+    height:              0,  // max 10 — male taller is the norm
+    income:              0,  // max 15 — male earns more is expected
+    family_values:       0,  // max 15 — shared household outlook
+    location:            0,  // max 10 — proximity
+    lifestyle:           0,  // max 15 — diet, smoking, drinking
+  };
+
+  // ── Children Preference (20 pts) ─────────────────────────────
+  const kc = male.want_kids;
+  const kd = female.want_kids;
+  if (kc === kd)                                           breakdown.children_preference = 20;
+  else if (kc === 'Open' || kd === 'Open')                 breakdown.children_preference = 12;
+  else if (kc === 'Already Has' || kd === 'Already Has')   breakdown.children_preference = 8;
+
+  // ── Age Gap (15 pts) — female younger is the strong preference in Indian matrimony
+  const maleAge   = getAge(male.date_of_birth);
+  const femaleAge = getAge(female.date_of_birth);
+  const ageDiff   = maleAge - femaleAge; // positive = male older
+  if      (ageDiff >= 0 && ageDiff <= 5)  breakdown.age_gap = 15; // ideal range
+  else if (ageDiff > 5  && ageDiff <= 10) breakdown.age_gap = 10; // wide but acceptable
+  else if (ageDiff > 10)                  breakdown.age_gap = 4;  // large gap
+  else if (ageDiff < 0  && ageDiff >= -2) breakdown.age_gap = 7;  // female slightly older — tolerable
+  // female more than 2 yrs older = 0 pts
+
+  // ── Height (10 pts) — male taller is the social norm ─────────
+  const mH = male.height_cm   || 0;
+  const fH = female.height_cm || 0;
+  if (mH > 0 && fH > 0) {
+    const hDiff = mH - fH; // positive = male taller
+    if      (hDiff >= 8) breakdown.height = 10;
+    else if (hDiff >= 4) breakdown.height = 7;
+    else if (hDiff >= 0) breakdown.height = 4;
+    // female taller = 0 pts
+  }
+
+  // ── Income (15 pts) — male is expected to be the primary earner ──
+  const mInc = male.annual_income   || 0;
+  const fInc = female.annual_income || 0;
+  if (mInc > 0 && fInc > 0) {
+    if      (mInc >= fInc)           breakdown.income = 15; // male earns same or more — ideal
+    else if (fInc / mInc <= 1.5)    breakdown.income = 8;  // female earns slightly more — acceptable
+    else if (fInc / mInc <= 2.5)    breakdown.income = 3;  // noticeable income gap
+    // female earns > 2.5x male = 0 pts
+  } else if (mInc > 0) {
+    breakdown.income = 10; // female income unknown — give benefit of doubt
+  }
+
+  // ── Family Values (15 pts) ────────────────────────────────────
+  const VALUES_ORDER = ['Traditional', 'Moderate', 'Liberal'];
+  const vi = VALUES_ORDER.indexOf(male.family_values);
+  const vj = VALUES_ORDER.indexOf(female.family_values);
+  if (vi !== -1 && vj !== -1) {
+    const valueDiff = Math.abs(vi - vj);
+    if      (valueDiff === 0) breakdown.family_values = 15;
+    else if (valueDiff === 1) breakdown.family_values = 8;
+  }
+
+  // ── Location (10 pts) ─────────────────────────────────────────
+  if (male.city && female.city && male.city === female.city) {
+    breakdown.location = 10;
+  } else if (male.state && female.state && male.state === female.state) {
+    breakdown.location = 6;
+  } else if (male.open_to_relocate || female.open_to_relocate) {
+    breakdown.location = 4;
+  }
+
+  // ── Lifestyle (15 pts) ────────────────────────────────────────
+  // Diet (5 pts)
+  const dietCompat = DIET_COMPAT[male.diet] || [];
+  if (female.diet && dietCompat.includes(female.diet)) breakdown.lifestyle += 5;
+
+  // Smoking (5 pts) — both never = 5, one never = 2
+  if (male.smoking && female.smoking) {
+    if      (male.smoking === 'Never' && female.smoking === 'Never') breakdown.lifestyle += 5;
+    else if (male.smoking === 'Never' || female.smoking === 'Never') breakdown.lifestyle += 2;
+  }
+
+  // Drinking (5 pts) — same habit = 5; Never ↔ Socially = 2 (adjacent)
+  if (male.drinking && female.drinking) {
+    if (male.drinking === female.drinking) {
+      breakdown.lifestyle += 5;
+    } else if (
+      (male.drinking === 'Never'    && female.drinking === 'Socially') ||
+      (male.drinking === 'Socially' && female.drinking === 'Never')
+    ) {
+      breakdown.lifestyle += 2;
+    }
+  }
+
+  const score = Math.min(100, Object.values(breakdown).reduce((a, b) => a + b, 0));
+  return { score, breakdown };
+}
+
+// ── PHASE 2: Placeholder scorer (to be replaced by gender routing in commit 4) ──
 
 function scoreMatch(customer, candidate) {
-  // Temporary flat scorer kept for backward compatibility during refactor.
+  // Temporary flat scorer kept for backward compatibility.
   // Will be replaced by scoreMaleCustomer / scoreFemaleCustomer routing.
   const breakdown = {
     children_preference: 0,  // max 25
