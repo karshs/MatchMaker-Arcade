@@ -237,7 +237,134 @@ function scoreMaleCustomer(male, female) {
   return { score, breakdown };
 }
 
-// ── PHASE 2: Placeholder scorer (to be replaced by gender routing in commit 4) ──
+// ── PHASE 2B: Female Customer Scorer ──────────────────────────────────────────
+// customer = Female, candidate = Male. Total: 100 pts.
+//
+// Research: Women on matrimonial platforms (Jeevansathi user studies,
+// matrimony.com compatibility reports) prioritise stability, shared values,
+// professional alignment, and urgency/relocation match over age/height.
+
+function scoreFemaleCustomer(female, male) {
+  const breakdown = {
+    children_preference:      0,  // max 15
+    family_values:            0,  // max 20 — highest weight for female customers
+    profession_compatibility: 0,  // max 15 — same employment sector
+    relocation_alignment:     0,  // max 10 — both willing to move
+    marriage_timeline:        0,  // max 10 — compatible urgency
+    income:                   0,  // max 10 — male earns stably
+    languages:                0,  // max 10 — shared communication
+    lifestyle:                0,  // max 10 — diet, smoking, drinking
+  };
+
+  // ── Children Preference (15 pts) ─────────────────────────────
+  const kc = female.want_kids;
+  const kd = male.want_kids;
+  if (kc === kd)                                          breakdown.children_preference = 15;
+  else if (kc === 'Open' || kd === 'Open')                breakdown.children_preference = 10;
+  else if (kc === 'Already Has' || kd === 'Already Has')  breakdown.children_preference = 6;
+
+  // ── Family Values (20 pts) ─────────────────────────────────────
+  // Highest weight — women prioritise values alignment more than any other factor
+  const VALUES_ORDER = ['Traditional', 'Moderate', 'Liberal'];
+  const vi = VALUES_ORDER.indexOf(female.family_values);
+  const vj = VALUES_ORDER.indexOf(male.family_values);
+  if (vi !== -1 && vj !== -1) {
+    const valueDiff = Math.abs(vi - vj);
+    if      (valueDiff === 0) breakdown.family_values = 20;
+    else if (valueDiff === 1) breakdown.family_values = 10;
+    // diff of 2 = 0 pts
+  }
+
+  // ── Profession Compatibility (15 pts) ─────────────────────────
+  // Same employment sector signals shared work culture and lifestyle expectations.
+  // e.g. Govt + Govt = job security, similar timings; Private + Private = growth mindset.
+  const SECTOR_ORDER = ['Government', 'Private', 'Business', 'Not Working', 'Other'];
+  const fSector = female.employed_in;
+  const mSector = male.employed_in;
+  if (fSector && mSector) {
+    if (fSector === mSector) {
+      breakdown.profession_compatibility = 15; // exact sector match
+    } else {
+      const fi = SECTOR_ORDER.indexOf(fSector);
+      const mi = SECTOR_ORDER.indexOf(mSector);
+      if (fi !== -1 && mi !== -1 && Math.abs(fi - mi) === 1) {
+        breakdown.profession_compatibility = 8; // adjacent sectors — compatible outlook
+      }
+    }
+  }
+
+  // ── Relocation Alignment (10 pts) ─────────────────────────────
+  if (female.open_to_relocate && male.open_to_relocate) {
+    breakdown.relocation_alignment = 10; // both flexible
+  } else if (female.open_to_relocate || male.open_to_relocate) {
+    breakdown.relocation_alignment = 6;  // one is flexible
+  } else {
+    breakdown.relocation_alignment = 2;  // neither — not a dealbreaker, just lower score
+  }
+
+  // ── Marriage Timeline (10 pts) ─────────────────────────────────
+  // Critical for female customers — urgency mismatch is the top reported dropout
+  // reason on Indian matrimonial platforms.
+  const ti = TIMELINE_ORDER.indexOf(female.marriage_timeline);
+  const tj = TIMELINE_ORDER.indexOf(male.marriage_timeline);
+  if (ti !== -1 && tj !== -1) {
+    const timeDiff = Math.abs(ti - tj);
+    if      (timeDiff === 0) breakdown.marriage_timeline = 10;
+    else if (timeDiff === 1) breakdown.marriage_timeline = 6;
+    else if (timeDiff === 2) breakdown.marriage_timeline = 2;
+    // > 2 steps apart = 0 pts
+  }
+
+  // ── Income (10 pts) — he earns stably; she checks if he meets her expectations ──
+  const mInc = male.annual_income   || 0;
+  const fInc = female.annual_income || 0;
+  if (mInc > 0) {
+    if (fInc > 0) {
+      if      (mInc >= fInc)        breakdown.income = 10; // he earns same or more
+      else if (fInc / mInc <= 2)    breakdown.income = 6;  // she earns more, within 2x
+      else                          breakdown.income = 2;  // large gap
+    } else {
+      breakdown.income = 7; // her income unknown — he earns, give partial credit
+    }
+  }
+
+  // ── Languages (10 pts) ────────────────────────────────────────
+  const fLangs = female.languages || [];
+  const mLangs = male.languages   || [];
+  const shared = fLangs.filter(l => mLangs.includes(l)).length;
+  const maxPossible = Math.min(Math.max(fLangs.length, mLangs.length), 3);
+  if (maxPossible > 0) {
+    breakdown.languages = Math.min(10, Math.round((Math.min(shared, maxPossible) / maxPossible) * 10));
+  }
+
+  // ── Lifestyle (10 pts) ────────────────────────────────────────
+  // Diet (4 pts)
+  const dietCompat = DIET_COMPAT[female.diet] || [];
+  if (male.diet && dietCompat.includes(male.diet)) breakdown.lifestyle += 4;
+
+  // Smoking (3 pts)
+  if (female.smoking && male.smoking) {
+    if      (female.smoking === 'Never' && male.smoking === 'Never') breakdown.lifestyle += 3;
+    else if (female.smoking === 'Never' || male.smoking === 'Never') breakdown.lifestyle += 1;
+  }
+
+  // Drinking (3 pts)
+  if (female.drinking && male.drinking) {
+    if (female.drinking === male.drinking) {
+      breakdown.lifestyle += 3;
+    } else if (
+      (female.drinking === 'Never'    && male.drinking === 'Socially') ||
+      (female.drinking === 'Socially' && male.drinking === 'Never')
+    ) {
+      breakdown.lifestyle += 1;
+    }
+  }
+
+  const score = Math.min(100, Object.values(breakdown).reduce((a, b) => a + b, 0));
+  return { score, breakdown };
+}
+
+// ── PHASE 2: scoreMatch wrapper (to be fully routed in commit 4) ──────────────
 
 function scoreMatch(customer, candidate) {
   // Temporary flat scorer kept for backward compatibility.
