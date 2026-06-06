@@ -364,115 +364,79 @@ function scoreFemaleCustomer(female, male) {
   return { score, breakdown };
 }
 
-// ── PHASE 2: scoreMatch wrapper (to be fully routed in commit 4) ──────────────
+// ── Phase 2 Router: scoreMatch ─────────────────────────────────────────────────
+// Public API used by aiInsights.js and any caller that doesn't know the gender.
+// Transparently routes to the correct gender-specific scorer.
 
 function scoreMatch(customer, candidate) {
-  // Temporary flat scorer kept for backward compatibility.
-  // Will be replaced by scoreMaleCustomer / scoreFemaleCustomer routing.
-  const breakdown = {
-    children_preference: 0,  // max 25
-    family_values:       0,  // max 15
-    education:           0,  // max 15
-    languages:           0,  // max 15 — FIXED: now capped correctly
-    income:              0,  // max 10
-    location:            0,  // max 10
-    lifestyle:           0,  // max 10
-  };
-
-  // Children Preference (25 pts)
-  const kc = customer.want_kids;
-  const kd = candidate.want_kids;
-  if (kc === kd)                                        breakdown.children_preference = 25;
-  else if (kc === 'Open' || kd === 'Open')              breakdown.children_preference = 15;
-  else if (kc === 'Already Has' || kd === 'Already Has') breakdown.children_preference = 10;
-
-  // Family Values (15 pts) — FIXED: guard against indexOf returning -1
-  const VALUES_ORDER = ['Traditional', 'Moderate', 'Liberal'];
-  const vi = VALUES_ORDER.indexOf(customer.family_values);
-  const vj = VALUES_ORDER.indexOf(candidate.family_values);
-  if (vi !== -1 && vj !== -1) {
-    const valueDiff = Math.abs(vi - vj);
-    if (valueDiff === 0)      breakdown.family_values = 15;
-    else if (valueDiff === 1) breakdown.family_values = 8;
+  if (customer.gender === 'Male') {
+    return scoreMaleCustomer(customer, candidate);
   }
+  return scoreFemaleCustomer(customer, candidate);
+}
 
-  // Education (15 pts)
-  const ei = EDU_RANK[customer.education] ?? 4;
-  const ej = EDU_RANK[candidate.education] ?? 4;
-  const eduDiff = Math.abs(ei - ej);
-  if (eduDiff === 0)      breakdown.education = 15;
-  else if (eduDiff === 1) breakdown.education = 10;
-  else if (eduDiff === 2) breakdown.education = 5;
+// ── Match Label ────────────────────────────────────────────────────────────────
+// Maps a numeric score to a human-readable tier label.
+// Used in the API response and by aiInsights.js for the summary line.
 
-  // Languages (15 pts) — FIXED: cap shared at maxPossible before math to prevent overflow
-  const custLangs = customer.languages || [];
-  const candLangs = candidate.languages || [];
-  const shared    = custLangs.filter(l => candLangs.includes(l)).length;
-  const maxPossible = Math.min(Math.max(custLangs.length, candLangs.length), 3);
-  if (maxPossible > 0) {
-    breakdown.languages = Math.min(15, Math.round((Math.min(shared, maxPossible) / maxPossible) * 15));
-  }
+function getMatchLabel(score) {
+  if (score >= 80) return 'Excellent Match';
+  if (score >= 60) return 'Good Match';
+  if (score >= 40) return 'Possible Match';
+  return 'Low Compatibility';
+}
 
-  // Income (10 pts)
-  const inc1 = customer.annual_income || 0;
-  const inc2 = candidate.annual_income || 0;
-  if (inc1 > 0 && inc2 > 0) {
-    const ratio = Math.max(inc1, inc2) / Math.min(inc1, inc2);
-    if (ratio <= 1.5)      breakdown.income = 10;
-    else if (ratio <= 2.5) breakdown.income = 5;
-    else if (ratio <= 4)   breakdown.income = 2;
-  }
+// ── Interests Overlap ─────────────────────────────────────────────────────────
+// Returns the count of shared interest tags between two profiles.
+// Not added to the 100-pt score — used as a secondary sort tiebreaker only.
 
-  // Location (10 pts) — FIXED: guard against undefined city/state
-  if (customer.city && candidate.city && customer.city === candidate.city) {
-    breakdown.location = 10;
-  } else if (customer.state && candidate.state && customer.state === candidate.state) {
-    breakdown.location = 6;
-  } else if (customer.open_to_relocate || candidate.open_to_relocate) {
-    breakdown.location = 4;
-  }
-
-  // Lifestyle (10 pts) — FIXED: guard against undefined smoking/drinking
-  const dietCompat = DIET_COMPAT[customer.diet] || [];
-  if (candidate.diet && dietCompat.includes(candidate.diet)) breakdown.lifestyle += 4;
-
-  if (customer.smoking && candidate.smoking) {
-    if (customer.smoking === 'Never' && candidate.smoking === 'Never') breakdown.lifestyle += 3;
-    else if (customer.smoking === 'Never' || candidate.smoking === 'Never') breakdown.lifestyle += 1;
-  }
-
-  if (customer.drinking && candidate.drinking) {
-    if (customer.drinking === candidate.drinking) {
-      breakdown.lifestyle += 3;
-    } else if (
-      (customer.drinking === 'Never' && candidate.drinking === 'Socially') ||
-      (customer.drinking === 'Socially' && candidate.drinking === 'Never')
-    ) {
-      breakdown.lifestyle += 1;
-    }
-  }
-
-  const score = Object.values(breakdown).reduce((a, b) => a + b, 0);
-  return { score, breakdown };
+function interestsOverlap(a, b) {
+  const ai = a.interests || [];
+  const bi = b.interests || [];
+  return ai.filter(i => bi.includes(i)).length;
 }
 
 // ── Main Engine Function ───────────────────────────────────────────────────────
+// Takes one customer and an array of all other active customers.
+// Returns top N matches sorted by score (desc), with interests overlap as tiebreaker.
 
 function findMatches(customer, allCandidates, topN = 20) {
   const results = [];
 
   for (const candidate of allCandidates) {
+    // Skip the customer themselves
     if (candidate.id === customer.id) continue;
 
     const filter = hardFilter(customer, candidate);
-    if (!filter.passed) continue;
+    if (!filter.passed) continue; // eliminated by hard filter
 
     const { score, breakdown } = scoreMatch(customer, candidate);
-    results.push({ candidate, score, breakdown });
+    const overlap = interestsOverlap(customer, candidate);
+    const label   = getMatchLabel(score);
+
+    results.push({
+      candidate,
+      score,
+      breakdown,
+      match_label:        label,   // e.g. "Excellent Match"
+      interests_overlap:  overlap, // used as tiebreaker, also exposed to UI
+    });
   }
 
-  results.sort((a, b) => b.score - a.score);
+  // Primary sort: score descending
+  // Secondary sort: interests overlap descending (tiebreaker when scores are equal)
+  results.sort((a, b) => b.score - a.score || b.interests_overlap - a.interests_overlap);
+
   return results.slice(0, topN);
 }
 
-module.exports = { findMatches, hardFilter, scoreMatch, getAge };
+module.exports = {
+  findMatches,
+  hardFilter,
+  scoreMatch,
+  scoreMaleCustomer,
+  scoreFemaleCustomer,
+  getMatchLabel,
+  getAge,
+};
+
