@@ -4,7 +4,9 @@ const { AppError } = require('../middleware/errorHandler');
 const { findMatches } = require('../services/matchEngine');
 
 // GET /api/customers/:id/matches
-// Runs the full engine: hard filters → score → sort → return top 20
+// Runs the full engine: hard filters → score → activity decay → sort → return top 20
+// Automatically excludes candidates that have already been Sent, are Interested,
+// or have reached a Successful Match status — so the matchmaker sees only fresh suggestions.
 async function getMatches(req, res, next) {
   try {
     const { id } = req.params;
@@ -17,48 +19,65 @@ async function getMatches(req, res, next) {
     if (custRows.length === 0) return next(new AppError('Customer not found.', 404));
     const customer = custRows[0];
 
-    // Fetch all active candidates (the engine filters by gender/prefs internally)
+    // Fetch IDs of candidates already actioned for this customer.
+    // We exclude: Sent, Interested, Successful — i.e. anything beyond 'Suggested'.
+    // 'Rejected' and 'Suggested' are intentionally NOT excluded so the matchmaker
+    // can revisit a previously suggested but unsent profile.
+    const alreadyMatched = await query(
+      `SELECT customer_b_id AS id FROM matches
+       WHERE customer_a_id = $1
+         AND status IN ('Sent', 'Interested', 'Successful')`,
+      [id]
+    );
+    const excludeIds = new Set(alreadyMatched.map(r => r.id));
+
+    // Fetch all active candidates (the engine handles gender/preference filtering)
     const candidates = await query(
       'SELECT * FROM customers WHERE is_active = TRUE'
     );
 
-    // Run the engine
-    const matches = findMatches(customer, candidates);
+    // Run the engine — passes excludeIds so already-sent profiles never surface
+    const matches = findMatches(customer, candidates, 20, excludeIds);
 
-    // Shape the response — include a clean candidate card + score breakdown
-    const data = matches.map(({ candidate, score, breakdown }) => ({
-      id: candidate.id,
-      first_name: candidate.first_name,
-      last_name: candidate.last_name,
-      gender: candidate.gender,
-      age: Math.floor((Date.now() - new Date(candidate.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000)),
-      city: candidate.city,
-      state: candidate.state,
-      occupation: candidate.occupation,
-      education: candidate.education,
-      annual_income: candidate.annual_income,
-      religion: candidate.religion,
-      caste: candidate.caste,
-      family_values: candidate.family_values,
-      want_kids: candidate.want_kids,
-      languages: candidate.languages,
-      diet: candidate.diet,
-      photo_url: candidate.photo_url,
-      journey_status: candidate.journey_status,
-      compatibility_score: score,
-      score_breakdown: breakdown,
+    // Shape the response — include all scoring signals for the UI
+    const data = matches.map(({ candidate, score, raw_score, activity_multiplier, breakdown, match_label }) => ({
+      id:                  candidate.id,
+      first_name:          candidate.first_name,
+      last_name:           candidate.last_name,
+      gender:              candidate.gender,
+      age:                 Math.floor((Date.now() - new Date(candidate.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000)),
+      city:                candidate.city,
+      state:               candidate.state,
+      occupation:          candidate.occupation,
+      education:           candidate.education,
+      annual_income:       candidate.annual_income,
+      religion:            candidate.religion,
+      caste:               candidate.caste,
+      family_values:       candidate.family_values,
+      want_kids:           candidate.want_kids,
+      languages:           candidate.languages,
+      diet:                candidate.diet,
+      photo_url:           candidate.photo_url,
+      journey_status:      candidate.journey_status,
+      compatibility_score: score,           // decayed ranking score
+      raw_score,                            // pure compatibility before decay
+      activity_multiplier,                  // UI can show 'Inactive profile' badge if < 1.0
+      match_label,                          // "Excellent Match" / "Good Match" etc.
+      score_breakdown:     breakdown,
     }));
 
     res.json({
       success: true,
-      customer_name: `${customer.first_name} ${customer.last_name}`,
-      total_matches: data.length,
+      customer_name:   `${customer.first_name} ${customer.last_name}`,
+      total_matches:   data.length,
+      excluded_count:  excludeIds.size, // tells the frontend how many were hidden
       data,
     });
   } catch (err) {
     next(err);
   }
 }
+
 
 // POST /api/customers/:id/matches/:matchId/send
 // Saves the match to the DB and marks it as Sent (mock email)
