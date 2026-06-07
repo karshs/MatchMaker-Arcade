@@ -715,3 +715,85 @@
   -webkit-font-smoothing: antialiased;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+/* ── New class aliases used by DashboardPage.jsx ───────────── */
+
+/* Topbar user area */
+.db-topbar-user    { display: flex; align-items: center; gap: 10px; }
+.db-topbar-avatar  { width: 32px; height: 32px; border-radius: 50%; background: var(--db-accent-bg); border: 1.5px solid var(--db-accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--db-accent-text); }
+.db-topbar-name    { font-size: 13px; font-weight: 700; color: var(--db-text); }
+.db-topbar-role    { font-size: 10px; color: var(--db-text-muted); }
+.db-topbar-search-wrap { position: relative; flex: 1; max-width: 300px; }
+.db-topbar-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--db-text-muted); pointer-events: none; }
+.db-topbar-search  { width: 100%; padding: 7px 12px 7px 36px; background: var(--db-sidebar-bg); border: 1px solid var(--db-border); border-radius: 6px; font-size: 13px; color: var(--db-text); font-family: 'Geist', 'Inter', sans-serif; outline: none; transition: border-color 0.15s; }
+.db-topbar-search:focus { border-color: var(--db-accent); box-shadow: 0 0 0 2.5px rgba(200,146,10,0.12); }
+.db-topbar-search::placeholder { color: var(--db-text-muted); }
+.db-topbar-actions { display: flex; align-items: center; gap: 6px; }
+
+/* Table card (replaces db-section) */
+.db-table-card  { background: var(--db-card); border: 1px solid var(--db-border); border-radius: 10px; overflow: hidden; }
+.db-table-header{ padding: 14px 20px; border-bottom: 1px solid var(--db-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.db-table-title { font-size: 14.5px; font-weight: 700; color: #223843; display: flex; align-items: center; gap: 6px; }
+
+/* Filter select */
+.db-filter-select { padding: 5px 8px; border: 1px solid var(--db-border); border-radius: 5px; font-size: 12px; color: var(--db-text-2); background: var(--db-sidebar-bg); font-family: 'Geist', 'Inter', sans-serif; outline: none; cursor: pointer; transition: border-color 0.15s; }
+.db-filter-select:focus { border-color: var(--db-accent); }
+
+/* Loading state */
+.db-loading { padding: 32px; text-align: center; font-size: 13px; color: var(--db-text-muted); }
+
+/* Muted cell */
+.db-cell-muted { font-size: 12.5px; color: var(--db-text-muted); }
+
+/* Avatar — table row */
+.db-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--db-border); flex-shrink: 0; }
+.db-avatar.db-avatar-initials { background: var(--db-sidebar-bg); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--db-text-2); }
+
+/* View button */
+.db-view-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--db-border); border-radius: 5px; font-size: 11px; font-weight: 700; color: var(--db-accent-text); background: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+.db-view-btn:hover { background: var(--db-accent-bg); border-color: var(--db-accent); }
+
+/* Status chip — used by the new JSX (replaces db-chip) */
+.db-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-family: 'Geist Mono', monospace;
+  border: 1px solid transparent;
+}
+
+.db-status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+/* Chip variants */
+.db-status-chip.searching   { background: var(--chip-searching-bg);  color: var(--chip-searching-text);  border-color: var(--chip-searching-border); }
+.db-status-chip.searching   .db-status-dot { background: var(--chip-searching-text); }
+
+.db-status-chip.review      { background: var(--chip-review-bg);     color: var(--chip-review-text);     border-color: var(--chip-review-border); }
+.db-status-chip.review      .db-status-dot { background: var(--chip-review-text); }
+
+.db-status-chip.interested  { background: var(--chip-interested-bg); color: var(--chip-interested-text); border-color: var(--chip-interested-border); }
+.db-status-chip.interested  .db-status-dot { background: var(--chip-interested-text); }
+
+.db-status-chip.call        { background: var(--chip-call-bg);       color: var(--chip-call-text);       border-color: var(--chip-call-border); }
+.db-status-chip.call        .db-status-dot { background: var(--chip-call-text); }
+
+.db-status-chip.match       { background: var(--chip-match-bg);      color: var(--chip-match-text);      border-color: var(--chip-match-border); }
+.db-status-chip.match       .db-status-dot { background: var(--chip-match-text); }
+
+.db-status-chip.paused      { background: var(--chip-paused-bg);     color: var(--chip-paused-text);     border-color: var(--chip-paused-border); }
+.db-status-chip.paused      .db-status-dot { background: var(--chip-paused-text); }
+
+.db-status-chip.closed      { background: var(--chip-closed-bg);     color: var(--chip-closed-text);     border-color: var(--chip-closed-border); }
+.db-status-chip.closed      .db-status-dot { background: var(--chip-closed-text); }
+
+/* Pagination row */
+.db-pagination   { padding: 12px 20px; border-top: 1px solid var(--db-border); display: flex; align-items: center; justify-content: space-between; }
+.db-page-info    { font-size: 11.5px; color: var(--db-text-muted); font-family: 'Geist Mono', monospace; }
+.db-page-btns    { display: flex; gap: 6px; }

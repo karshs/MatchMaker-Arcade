@@ -1,85 +1,121 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { customersApi, notesApi } from '../api'
 import './CustomerDetailPage.css'
-
-/* ── Mock data (swap with API call: GET /api/customers/:id) ─── */
-const CLIENT = {
-  name:        'Rahul Sharma',
-  age:         29,
-  city:        'Mumbai',
-  occupation:  'Software Architect',
-  status:      'SEARCHING',
-  registered:  'Oct 12, 2023',
-  lastUpdated: '2 days ago',
-  tier:        'Elite Platinum',
-  assignedTo:  'Ananya Iyer',
-  // Professional
-  currentRole: 'Senior Architect at Google',
-  education:   'MS, Stanford University',
-  income:      '₹85L - 1Cr PA',
-  // Family
-  religion:    'Hindu, Brahmin (Saraswat)',
-  values:      'Liberal-Modern',
-  grewUp:      'South Mumbai (Colaba)',
-  // Habits
-  habits:      [
-    { icon: 'restaurant',  label: 'Vegetarian' },
-    { icon: 'smoke_free',  label: 'Non-Smoker' },
-    { icon: 'liquor',      label: 'Socially'   },
-  ],
-  futurePlans: 'Wants 2 children, looking to marry within the next 12–18 months. Open to relocating to Bangalore or London.',
-  preferences: [
-    { ok: true,  text: 'Age: 25 - 30' },
-    { ok: true,  text: 'Location: Mumbai / Pune / Overseas' },
-    { ok: false, text: 'Deal Breaker: Smoking' },
-  ],
-  // Notes
-  notes: [
-    { type: 'call',    icon: 'call',   label: 'Call',    date: '20 Oct', text: "Rahul expressed interest in Priya's profile. Needs more info on her work schedule.", primary: true },
-    { type: 'meeting', icon: 'groups', label: 'Meeting', date: '12 Oct', text: 'In-person onboarding. Client is very focused on core values and education background.', primary: false },
-  ],
-  // Timeline
-  timeline: [
-    { title: 'Status: Searching',      sub: 'Updated by System • Oct 14', active: true  },
-    { title: 'Screening Completed',    sub: 'Validated by AI Engine • Oct 13', active: false },
-    { title: 'Account Created',        sub: 'Direct Registration • Oct 12',   active: false },
-  ],
-  // Sent matches
-  sentMatches: [
-    {
-      name: 'Priya Malhotra',
-      city: 'Mumbai',
-      role: 'Senior Product Manager',
-      income: '₹85L - 1Cr PA',
-      sentDate: '14 Oct 2023',
-      response: 'interested',
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4197vTks4fZKTWfyIk55ynSTIjl-2pHXrPEIRZXx9BMkTk-fX0Lxgf8m0r1Lq-6n6ZedPhhNWhx0IfQrsr4U43vDKqPnpz25TSTQQ5WX71pFr7RL4x4YOmXIVL7A4dLIxfD16_4rCx-R9MI0WM_W4iUUm3UuZgIN84tXBa0vWNmRqt3rZN7cEBNLJyGD99bcxIVt0xA1MAHAX11EYGXCZ-LuvQEXDHvP8AihqWrSphK7PDmv38o9XsuyEbZmCN4_Lh5-Tu97c5rM',
-    },
-    {
-      name: 'Sanya Gupta',
-      city: 'Pune',
-      role: 'Creative Director',
-      income: '₹60L - 75L PA',
-      sentDate: '02 Oct 2023',
-      response: 'rejected',
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6mxR3nC6H3yGYT8KP0uWd03oZiTezI3qnvrVtBqMtx-Ps2r3w_C29Vu55SyVkGhT71GWT8cxx8SJ07fQDny7ZEJJ4wPoRvHmsu_68EA40DoTiFDzA3bn6QP6-wtby_BOlvf-jHfafKzYZbhFwRWoHVhbjf5adNOL7U-EVQUF7H0lnQx6kvpjOrQ5Wg6babG0DTJJJKGYMMlH8sh3jvGNhiZsM7A-t0WZAX59UsBoOItLwUKpGXSFqoxnqt2A3BuqhMSmr5S4COH0',
-    },
-  ],
-  photoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1Pe_grMwXOBuOgC7hInW1tX0G-Uect_RNXjmY4vq2erckpu4i3rS2XHhQmm6E2MExyvetiJNWkRvZ7GtrujRkV4ayWP0xiJcrkAK56r2YHxMmBAxG_S_1eunuVn7ztmuLHxmGTqpFBHQitEKITs9FV4eKO6ExHOfp5pJ05okaE2cup9WApLl9J348jP-21wPHFJNhh6vdmGJVPbj6XASEcAilrA6qBdd7skDkeua-O0WhFWdDwtH_SCHNu3PuID11ovpvxxbs-mA',
-}
 
 const TABS = ['Personal Details', 'Lifestyle & Plans', 'Partner Preferences', 'Family Background']
 
+const STATUS_MAP = {
+  'Searching':         { cls: 'searching',  dot: '#C8920A' },
+  'Profile Verified':  { cls: 'searching',  dot: '#C8920A' },
+  'Matches Shared':    { cls: 'review',     dot: '#E65100' },
+  'Interested':        { cls: 'interested', dot: '#1565C0' },
+  'Call Scheduled':    { cls: 'call',       dot: '#2E7D32' },
+  'Meeting Scheduled': { cls: 'call',       dot: '#2E7D32' },
+  'Successful Match':  { cls: 'match',      dot: '#6A1B9A' },
+  'Paused':            { cls: 'paused',     dot: '#757575' },
+  'Inactive':          { cls: 'closed',     dot: '#C62828' },
+}
+
+function fmtDate(d) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function timeAgo(d) {
+  if (!d) return '—'
+  const diff = Date.now() - new Date(d)
+  const days = Math.floor(diff / 86400000)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+  return fmtDate(d)
+}
+
 const NAV = [
-  { icon: 'dashboard', label: 'Dashboard',     active: false },
-  { icon: 'group',     label: 'Customers',     active: true  },
-  { icon: 'search',    label: 'Global Search', active: false },
-  { icon: 'event',     label: 'Calendar',      active: false },
+  { icon: 'dashboard', label: 'Dashboard',     path: '/'          },
+  { icon: 'group',     label: 'Customers',     path: '/customers', active: true },
+  { icon: 'search',    label: 'Global Search', path: '/'          },
+  { icon: 'event',     label: 'Calendar',      path: '/'          },
 ]
 
-/* ── Component ─────────────────────────────────────────────── */
 export default function CustomerDetailPage() {
+  const { id }   = useParams()
+  const navigate = useNavigate()
+  const { matchmaker, logout } = useAuth()
+
+  const [customer,  setCustomer]  = useState(null)
+  const [notes,     setNotes]     = useState([])
+  const [timeline,  setTimeline]  = useState([])
+  const [sentMatch, setSentMatch] = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState('')
+
   const [activeTab, setActiveTab] = useState(0)
-  const [note, setNote] = useState('')
+  const [noteText,  setNoteText]  = useState('')
+  const [saving,    setSaving]    = useState(false)
+
+  /* ── Fetch all data in parallel ── */
+  const load = useCallback(async () => {
+    setLoading(true); setError('')
+    try {
+      const [custRes, notesRes, tlRes, sentRes] = await Promise.all([
+        customersApi.get(id),
+        notesApi.list(id),
+        customersApi.journeyEvents(id),
+        customersApi.sentMatches(id),
+      ])
+      setCustomer(custRes.data)
+      setNotes(notesRes.data)
+      setTimeline(tlRes.data.reverse()) // newest first
+      setSentMatch(sentRes.data)
+    } catch (err) {
+      if (err.status === 401) { logout(); navigate('/login') }
+      if (err.status === 404) { navigate('/customers') }
+      setError(err.message || 'Failed to load customer.')
+    } finally {
+      setLoading(false)
+    }
+  }, [id, logout, navigate])
+
+  useEffect(() => { load() }, [load])
+
+  /* ── Save note ── */
+  async function handleSaveNote() {
+    if (!noteText.trim()) return
+    setSaving(true)
+    try {
+      const res = await notesApi.add(id, 'General Note', noteText.trim())
+      setNotes(n => [res.data, ...n])
+      setNoteText('')
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  /* ── Loading / error states ── */
+  if (loading) {
+    return (
+      <div className="cd cd-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#777', fontSize: 14 }}>Loading customer profile…</div>
+      </div>
+    )
+  }
+
+  if (error || !customer) {
+    return (
+      <div className="cd cd-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#C62828', fontSize: 14 }}>{error || 'Customer not found.'}</div>
+      </div>
+    )
+  }
+
+  const statusCfg = STATUS_MAP[customer.journey_status] || STATUS_MAP['Paused']
+  const fullName  = `${customer.first_name} ${customer.last_name}`
+  const initials  = `${customer.first_name?.[0] ?? ''}${customer.last_name?.[0] ?? ''}`.toUpperCase()
 
   return (
     <div className="cd cd-shell">
@@ -88,32 +124,24 @@ export default function CustomerDetailPage() {
       <aside className="cd-sidebar">
         <div className="cd-brand-name">The Date Crew</div>
         <div className="cd-brand-sub">Matchmaker Portal</div>
-
         <button className="cd-new-btn" id="cd-new-case-btn">
-          <span className="ms">add</span>
-          New Matchmaking Case
+          <span className="ms">add</span>New Matchmaking Case
         </button>
-
         <nav className="cd-nav">
           {NAV.map(item => (
             <button
               key={item.label}
               className={`cd-nav-link ${item.active ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
               id={`cd-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              <span className="ms">{item.icon}</span>
-              {item.label}
+              <span className="ms">{item.icon}</span>{item.label}
             </button>
           ))}
         </nav>
-
         <div className="cd-sidebar-footer">
-          <button className="cd-nav-link" id="cd-nav-support">
-            <span className="ms">help</span>Support
-          </button>
-          <button className="cd-nav-link" id="cd-nav-signout">
-            <span className="ms">logout</span>Sign Out
-          </button>
+          <button className="cd-nav-link" id="cd-nav-support"><span className="ms">help</span>Support</button>
+          <button className="cd-nav-link" id="cd-nav-signout" onClick={logout}><span className="ms">logout</span>Sign Out</button>
         </div>
       </aside>
 
@@ -124,49 +152,48 @@ export default function CustomerDetailPage() {
         <header className="cd-topbar">
           <span className="cd-topbar-logo">The Date Crew</span>
           <nav className="cd-topbar-nav">
-            <button className="cd-topbar-link" id="cd-top-dashboard">Dashboard</button>
-            <button className="cd-topbar-link active" id="cd-top-customers">Customers</button>
+            <button className="cd-topbar-link" onClick={() => navigate('/')} id="cd-top-dashboard">Dashboard</button>
+            <button className="cd-topbar-link active" onClick={() => navigate('/customers')} id="cd-top-customers">Customers</button>
           </nav>
           <div className="cd-topbar-right">
-            <button className="cd-topbar-icon-btn" id="cd-top-notif" title="Notifications">
-              <span className="ms">notifications</span>
-            </button>
-            <button className="cd-topbar-icon-btn" id="cd-top-settings" title="Settings">
-              <span className="ms">settings</span>
-            </button>
-            <img
-              className="cd-topbar-avatar"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5jpvF0t2DpsLtMbvBq5jRuqDZXUffcNfKJNqDKdHkFjpan6m_tHawpjMccxcvnHEsJ4nbUSanL_uySt-Gkp8NEpx3EBoSU9RhSXb0DR_ak1kEYe8BkAKe7dzM3ikg8PEyru_h_Vx2u36GKIztaqABZacQjLNdsSMcwe5DGViJiygEKSbnLgvS3oGzzEXkQN1U2YCwk7K1Nedp3HLAAe2ib8_dG8P1E19e2pekUNtloMAoUXGpqlNpp2yhQil3d9VW61SGajinkBc"
-              alt="Matchmaker avatar"
-            />
+            <button className="cd-topbar-icon-btn" id="cd-top-notif"><span className="ms">notifications</span></button>
+            <button className="cd-topbar-icon-btn" id="cd-top-settings"><span className="ms">settings</span></button>
+            <div className="cd-topbar-avatar" style={{ background: '#C8920A', color: '#fff', display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,borderRadius:'50%',width:30,height:30 }}>
+              {matchmaker?.name?.split(' ').map(w => w[0]).join('').slice(0,2) || 'MM'}
+            </div>
           </div>
         </header>
 
-        {/* Scrollable canvas */}
+        {/* Canvas */}
         <div className="cd-canvas">
 
-          {/* Hero profile card */}
+          {/* Hero */}
           <section className="cd-hero">
             <div className="cd-hero-photo-wrap">
-              <img className="cd-hero-photo" src={CLIENT.photoUrl} alt={CLIENT.name} />
+              {customer.photo_url ? (
+                <img className="cd-hero-photo" src={customer.photo_url} alt={fullName} />
+              ) : (
+                <div className="cd-hero-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,fontWeight:800,color:'#C8920A' }}>
+                  {initials}
+                </div>
+              )}
               <div className="cd-verified-badge">
-                <span className="ms" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                <span className="ms" style={{ fontVariationSettings:"'FILL' 1" }}>verified</span>
               </div>
             </div>
 
             <div className="cd-hero-info">
               <div className="cd-hero-top">
                 <div>
-                  <h1 className="cd-client-name">{CLIENT.name}</h1>
+                  <h1 className="cd-client-name">{fullName}</h1>
                   <div className="cd-client-sub">
                     <span className="ms">location_on</span>
-                    {CLIENT.age} • {CLIENT.city} • {CLIENT.occupation}
+                    {customer.age} • {customer.city}{customer.state ? `, ${customer.state}` : ''} • {customer.occupation}
                   </div>
                 </div>
-
                 <div className="cd-status-pill" id="cd-status-pill">
-                  <span className="cd-status-dot" />
-                  {CLIENT.status}
+                  <span className="cd-status-dot" style={{ background: statusCfg.dot }} />
+                  {customer.journey_status?.toUpperCase()}
                   <span className="ms">expand_more</span>
                 </div>
               </div>
@@ -176,28 +203,28 @@ export default function CustomerDetailPage() {
                   <span className="ms">calendar_today</span>
                   <div>
                     <div className="cd-meta-label">Registered</div>
-                    <div className="cd-meta-value">{CLIENT.registered}</div>
+                    <div className="cd-meta-value">{fmtDate(customer.created_at)}</div>
                   </div>
                 </div>
                 <div className="cd-meta-item">
                   <span className="ms">history</span>
                   <div>
                     <div className="cd-meta-label">Last Updated</div>
-                    <div className="cd-meta-value">{CLIENT.lastUpdated}</div>
+                    <div className="cd-meta-value">{timeAgo(customer.last_updated)}</div>
                   </div>
                 </div>
                 <div className="cd-meta-item">
                   <span className="ms accent">workspace_premium</span>
                   <div>
-                    <div className="cd-meta-label">Tier</div>
-                    <div className="cd-meta-value accent">{CLIENT.tier}</div>
+                    <div className="cd-meta-label">Religion</div>
+                    <div className="cd-meta-value accent">{customer.religion || '—'}</div>
                   </div>
                 </div>
                 <div className="cd-meta-item">
                   <span className="ms">support_agent</span>
                   <div>
-                    <div className="cd-meta-label">Assigned To</div>
-                    <div className="cd-meta-value underline">{CLIENT.assignedTo}</div>
+                    <div className="cd-meta-label">Marital Status</div>
+                    <div className="cd-meta-value underline">{customer.marital_status || '—'}</div>
                   </div>
                 </div>
               </div>
@@ -207,104 +234,76 @@ export default function CustomerDetailPage() {
           {/* Tabs */}
           <div className="cd-tabs">
             {TABS.map((tab, i) => (
-              <button
-                key={tab}
-                className={`cd-tab ${activeTab === i ? 'active' : ''}`}
-                id={`cd-tab-${i}`}
-                onClick={() => setActiveTab(i)}
-              >
-                {tab}
-              </button>
+              <button key={tab} className={`cd-tab ${activeTab === i ? 'active' : ''}`}
+                id={`cd-tab-${i}`} onClick={() => setActiveTab(i)}>{tab}</button>
             ))}
           </div>
 
           {/* Content grid */}
           <div className="cd-grid">
 
-            {/* ── Left column ── */}
+            {/* LEFT */}
             <div className="cd-left">
 
               {/* Background & Career */}
               <div className="cd-card">
                 <div className="cd-card-header">
                   <span className="cd-card-title">Background &amp; Career</span>
-                  <button className="cd-edit-btn" id="cd-edit-career">
-                    <span className="ms">edit</span>
-                  </button>
+                  <button className="cd-edit-btn" id="cd-edit-career"><span className="ms">edit</span></button>
                 </div>
                 <div className="cd-card-body">
                   <div className="cd-card-cols">
                     <div>
                       <div className="cd-section-label">Professional</div>
                       <div className="cd-kv-list">
-                        <div className="cd-kv">
-                          <span className="cd-kv-key">Current Role</span>
-                          <span className="cd-kv-val">{CLIENT.currentRole}</span>
-                        </div>
-                        <div className="cd-kv">
-                          <span className="cd-kv-key">Education</span>
-                          <span className="cd-kv-val">{CLIENT.education}</span>
-                        </div>
-                        <div className="cd-kv">
-                          <span className="cd-kv-key">Income</span>
-                          <span className="cd-kv-val">{CLIENT.income}</span>
-                        </div>
+                        <div className="cd-kv"><span className="cd-kv-key">Occupation</span><span className="cd-kv-val">{customer.occupation || '—'}</span></div>
+                        <div className="cd-kv"><span className="cd-kv-key">Education</span><span className="cd-kv-val">{customer.education || '—'}</span></div>
+                        <div className="cd-kv"><span className="cd-kv-key">Company</span><span className="cd-kv-val">{customer.company || '—'}</span></div>
+                        <div className="cd-kv"><span className="cd-kv-key">Income</span><span className="cd-kv-val">{customer.annual_income ? `₹${customer.annual_income.toLocaleString()}` : '—'}</span></div>
                       </div>
                     </div>
                     <div>
                       <div className="cd-section-label">Family</div>
                       <div className="cd-kv-list">
-                        <div className="cd-kv">
-                          <span className="cd-kv-key">Religion / Caste</span>
-                          <span className="cd-kv-val">{CLIENT.religion}</span>
-                        </div>
-                        <div className="cd-kv">
-                          <span className="cd-kv-key">Values</span>
-                          <span className="cd-kv-val"><span className="cd-tag">{CLIENT.values}</span></span>
-                        </div>
-                        <div className="cd-kv">
-                          <span className="cd-kv-key">Grew up in</span>
-                          <span className="cd-kv-val">{CLIENT.grewUp}</span>
-                        </div>
+                        <div className="cd-kv"><span className="cd-kv-key">Religion</span><span className="cd-kv-val">{customer.religion || '—'}</span></div>
+                        <div className="cd-kv"><span className="cd-kv-key">Caste</span><span className="cd-kv-val">{customer.caste || '—'}</span></div>
+                        <div className="cd-kv"><span className="cd-kv-key">Family Type</span><span className="cd-kv-val">{customer.family_type || '—'}</span></div>
+                        <div className="cd-kv"><span className="cd-kv-key">Values</span><span className="cd-kv-val"><span className="cd-tag">{customer.family_values || '—'}</span></span></div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Lifestyle & Preferences */}
+              {/* Lifestyle */}
               <div className="cd-card">
                 <div className="cd-card-header">
                   <span className="cd-card-title">Lifestyle &amp; Preferences</span>
-                  <button className="cd-edit-btn" id="cd-edit-lifestyle">
-                    <span className="ms">edit</span>
-                  </button>
+                  <button className="cd-edit-btn" id="cd-edit-lifestyle"><span className="ms">edit</span></button>
                 </div>
                 <div className="cd-card-body">
                   <div className="cd-card-cols">
                     <div>
                       <div className="cd-section-label">Habits</div>
                       <div className="cd-habits-list">
-                        {CLIENT.habits.map(h => (
-                          <span key={h.label} className="cd-habit-chip">
-                            <span className="ms">{h.icon}</span>
-                            {h.label}
-                          </span>
-                        ))}
+                        {customer.diet && <span className="cd-habit-chip"><span className="ms">restaurant</span>{customer.diet}</span>}
+                        {customer.smoking === false && <span className="cd-habit-chip"><span className="ms">smoke_free</span>Non-Smoker</span>}
+                        {customer.smoking === true  && <span className="cd-habit-chip"><span className="ms">smoking_rooms</span>Smoker</span>}
+                        {customer.drinking && <span className="cd-habit-chip"><span className="ms">liquor</span>{customer.drinking}</span>}
+                        {customer.physical_activity && <span className="cd-habit-chip"><span className="ms">fitness_center</span>{customer.physical_activity}</span>}
                       </div>
-                      <div className="cd-section-label" style={{ marginTop: 12 }}>Future Plans</div>
-                      <p className="cd-future-plans">{CLIENT.futurePlans}</p>
+                      {customer.marriage_timeline && <>
+                        <div className="cd-section-label" style={{ marginTop: 12 }}>Future Plans</div>
+                        <p className="cd-future-plans">Marriage timeline: {customer.marriage_timeline}. {customer.want_kids ? 'Wants kids.' : ''} {customer.open_to_relocate ? 'Open to relocate.' : ''}</p>
+                      </>}
                     </div>
                     <div>
                       <div className="cd-section-label">Partner Preferences</div>
                       <div className="cd-pref-list">
-                        {CLIENT.preferences.map((p, i) => (
-                          <div key={i} className={`cd-pref-item ${!p.ok ? 'deal-breaker' : ''}`}>
-                            <span className={`ms ${!p.ok ? 'breaker' : ''}`}>
-                              {p.ok ? 'check_circle' : 'cancel'}
-                            </span>
-                            {p.text}
-                          </div>
+                        {customer.pref_age_min && <div className="cd-pref-item"><span className="ms">check_circle</span>Age: {customer.pref_age_min}–{customer.pref_age_max}</div>}
+                        {customer.pref_location && <div className="cd-pref-item"><span className="ms">check_circle</span>Location: {customer.pref_location}</div>}
+                        {customer.deal_breakers?.length > 0 && customer.deal_breakers.map((db, i) => (
+                          <div key={i} className="cd-pref-item deal-breaker"><span className="ms breaker">cancel</span>Deal Breaker: {db}</div>
                         ))}
                       </div>
                     </div>
@@ -315,82 +314,85 @@ export default function CustomerDetailPage() {
               {/* Sent Matches */}
               <div>
                 <div className="cd-matches-title">Sent Matches History</div>
-                {CLIENT.sentMatches.map(m => (
-                  <div key={m.name} className="cd-match-card">
-                    <img className="cd-match-photo" src={m.img} alt={m.name} />
+                {sentMatch.length === 0 ? (
+                  <div style={{ fontSize: 13, color: '#777', padding: '8px 0' }}>No matches sent yet.</div>
+                ) : sentMatch.map(m => (
+                  <div key={m.id} className="cd-match-card">
+                    {m.photo_url ? (
+                      <img className="cd-match-photo" src={m.photo_url} alt={m.first_name} />
+                    ) : (
+                      <div className="cd-match-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:700,color:'#C8920A',borderRadius:6,flexShrink:0,width:60,height:60 }}>
+                        {`${m.first_name?.[0]??''}${m.last_name?.[0]??''}`.toUpperCase()}
+                      </div>
+                    )}
                     <div className="cd-match-info">
                       <div className="cd-match-top">
                         <div>
-                          <div className="cd-match-name">{m.name}</div>
-                          <div className="cd-match-loc">{m.city} • {m.role}</div>
+                          <div className="cd-match-name">{m.first_name} {m.last_name}</div>
+                          <div className="cd-match-loc">{m.city} • {m.occupation}</div>
                         </div>
-                        <span className={`cd-match-chip ${m.response}`}>
-                          {m.response.charAt(0).toUpperCase() + m.response.slice(1)}
+                        <span className={`cd-match-chip ${m.status === 'Interested' ? 'interested' : 'rejected'}`}>
+                          {m.status}
                         </span>
                       </div>
                       <div className="cd-match-meta">
-                        <div className="cd-match-meta-item">
-                          <span className="cd-match-meta-label">Income</span>
-                          <span className="cd-match-meta-val">{m.income}</span>
-                        </div>
-                        <div className="cd-match-meta-item">
-                          <span className="cd-match-meta-label">Sent Date</span>
-                          <span className="cd-match-meta-val">{m.sentDate}</span>
-                        </div>
+                        {m.annual_income && <div className="cd-match-meta-item"><span className="cd-match-meta-label">Income</span><span className="cd-match-meta-val">₹{m.annual_income.toLocaleString()}</span></div>}
+                        {m.sent_at && <div className="cd-match-meta-item"><span className="cd-match-meta-label">Sent</span><span className="cd-match-meta-val">{fmtDate(m.sent_at)}</span></div>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
 
-            </div>{/* end left */}
-
-            {/* ── Right column ── */}
+            {/* RIGHT */}
             <div className="cd-right">
 
-              {/* AI Find Matches card — colours untouched */}
+              {/* AI card */}
               <div className="cd-ai-card" id="cd-ai-card">
                 <div className="cd-ai-inner">
                   <span className="ms">auto_awesome</span>
                   <div className="cd-ai-title">Find Matches</div>
-                  <div className="cd-ai-sub">Discover premium profiles for {CLIENT.name.split(' ')[0]}</div>
-                  <button className="cd-ai-btn" id="cd-start-matching-btn">
+                  <div className="cd-ai-sub">Discover premium profiles for {customer.first_name}</div>
+                  <button
+                    className="cd-ai-btn"
+                    id="cd-start-matching-btn"
+                    onClick={() => navigate(`/customers/${id}/matches`)}
+                  >
                     Start Matching Now
                   </button>
                 </div>
               </div>
 
-              {/* Consultant Notes */}
+              {/* Notes */}
               <div className="cd-notes-card">
                 <div className="cd-notes-title">Consultant Notes</div>
                 <textarea
                   id="cd-note-input"
                   className="cd-notes-textarea"
                   placeholder="Add a private note about this client…"
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
                 />
-                <button className="cd-save-btn" id="cd-save-note-btn">
-                  <span className="ms">save</span>
-                  Save Note
+                <button className="cd-save-btn" id="cd-save-note-btn" onClick={handleSaveNote} disabled={saving}>
+                  <span className="ms">save</span>{saving ? 'Saving…' : 'Save Note'}
                 </button>
 
                 <div className="cd-notes-log">
-                  {CLIENT.notes.map((n, i) => (
-                    <div key={i} className={`cd-note-item ${n.primary ? '' : 'secondary'}`}>
+                  {notes.map((n, i) => (
+                    <div key={n.id || i} className={`cd-note-item ${i === 0 ? '' : 'secondary'}`}>
                       <div className="cd-note-head">
                         <div className="cd-note-label">
-                          <span className="ms">{n.icon}</span>
-                          {n.label}
-                          <span className="cd-note-date">• {n.date}</span>
+                          <span className="ms">{n.note_type === 'Call' ? 'call' : n.note_type === 'Meeting' ? 'groups' : 'note'}</span>
+                          {n.note_type}
+                          <span className="cd-note-date">• {fmtDate(n.created_at)}</span>
                         </div>
-                        <button className="cd-note-more-btn">
-                          <span className="ms">more_horiz</span>
-                        </button>
+                        <button className="cd-note-more-btn"><span className="ms">more_horiz</span></button>
                       </div>
-                      <p className="cd-note-text">{n.text}</p>
+                      <p className="cd-note-text">{n.content}</p>
                     </div>
                   ))}
+                  {notes.length === 0 && <div style={{ fontSize: 12, color: '#aaa' }}>No notes yet.</div>}
                 </div>
               </div>
 
@@ -398,19 +400,20 @@ export default function CustomerDetailPage() {
               <div className="cd-timeline-card">
                 <div className="cd-timeline-title">Journey Timeline</div>
                 <div className="cd-timeline">
-                  {CLIENT.timeline.map((t, i) => (
-                    <div key={i} className="cd-tl-item">
-                      <div className={`cd-tl-dot ${t.active ? '' : 'muted'}`} />
-                      <div className="cd-tl-title">{t.title}</div>
-                      <div className="cd-tl-sub">{t.sub}</div>
+                  {timeline.length === 0 ? (
+                    <div style={{ fontSize: 12, color: '#aaa' }}>No timeline events yet.</div>
+                  ) : timeline.map((t, i) => (
+                    <div key={t.id || i} className="cd-tl-item">
+                      <div className={`cd-tl-dot ${i === 0 ? '' : 'muted'}`} />
+                      <div className="cd-tl-title">{t.to_status || t.status}</div>
+                      <div className="cd-tl-sub">{t.note ? `${t.note} • ` : ''}{fmtDate(t.changed_at)}</div>
                     </div>
                   ))}
                 </div>
               </div>
-
-            </div>{/* end right */}
-          </div>{/* end cd-grid */}
-        </div>{/* end cd-canvas */}
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   )

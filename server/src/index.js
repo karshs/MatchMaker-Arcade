@@ -3,23 +3,32 @@ const app = require('./app');
 const { config } = require('./config/env');
 const { testConnection } = require('./config/db');
 
-async function start() {
-  try {
-    // Verify DB is reachable before accepting any traffic
-    await testConnection();
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-    app.listen(config.port, () => {
-      console.log(`\n🚀 MatchMaker Arcade API`);
-      console.log(`   Mode:   ${config.nodeEnv}`);
-      console.log(`   Port:   ${config.port}`);
-      console.log(`   Health: http://localhost:${config.port}/api/health`);
-      console.log(`   Admin:  ${config.adminEmail}\n`);
-    });
-  } catch (error) {
-    // Exit immediately — a broken DB or bad config shouldn't silently run
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
+async function start() {
+  // Neon free-tier DB may need a cold-start — retry up to 5 times
+  const MAX_RETRIES = 5;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      await testConnection();
+      break; // success — exit the retry loop
+    } catch (err) {
+      if (attempt === MAX_RETRIES) {
+        console.error('❌ Failed to connect to DB after', MAX_RETRIES, 'attempts:', err.message);
+        process.exit(1);
+      }
+      console.warn(`⏳ DB connection attempt ${attempt}/${MAX_RETRIES} failed — retrying in 3s…`);
+      await sleep(3000);
+    }
   }
+
+  app.listen(config.port, () => {
+    console.log(`\n🚀 MatchMaker Arcade API`);
+    console.log(`   Mode:   ${config.nodeEnv}`);
+    console.log(`   Port:   ${config.port}`);
+    console.log(`   Health: http://localhost:${config.port}/api/health`);
+    console.log(`   Admin:  ${config.adminEmail}\n`);
+  });
 }
 
 // Crash cleanly on any unhandled errors

@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { matchesApi } from '../api'
 import './MatchingPage.css'
 
-/* ── Score tier helper ─────────────────────────────────────── */
+/* ── Tier helpers ──────────────────────────────────────────── */
 function getTier(score) {
   if (score >= 90) return 'excellent'
   if (score >= 70) return 'good'
@@ -14,174 +17,94 @@ function getTierLabel(score) {
   return 'Fair Match'
 }
 
-/* ── Mock data (swap with GET /api/matches?clientId=:id) ─────
-   Each candidate has: id, name, sub, score, traits,
-   breakdown rows, aiInsight, photoUrl
-   ─────────────────────────────────────────────────────────── */
-const CLIENT = {
-  name:     'Julianne V.',
-  total:    124,
-  hidden:   12,
-  photoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA5p6mWSrv8Cma0UCFyHHMPe-Hgnlub79wNr-nJCZGZfTUAnHSJJWcgIuiYDLruNpEzg3JMHs5dfgcOulYUp6TGnlN0uYIMnNM3yaodNXJSqCvGO54gn_tROtC3SSYiXFiWF_4N7ilEK0OS9WlVfYZzluxq1wY1tDQ81dNvfwT-CXWCODNV9X-oBNNAOK1fINabVtkgiPh0QVhdAaVmE-x7731mah21ySAtZb_4aT_Dimc44lk_GiHttK93sqXiHE2BTpkcYWFh1oQ',
-}
-
-const CANDIDATES = [
-  {
-    id: 1,
-    name:    'Marcus Thorne',
-    sub:     '38 • San Francisco • Venture Architect',
-    score:   94,
-    traits:  [
-      { label: 'Stable Income',   highlight: false },
-      { label: 'Philanthropy',    highlight: false },
-      { label: 'Verified Account',highlight: true  },
-    ],
-    breakdown: [
-      { key: 'Children Pref.', val: 'Match',      warn: false },
-      { key: 'Age Gap',        val: 'Optimal',    warn: false },
-      { key: 'Height',         val: 'Ideal',      warn: false },
-      { key: 'Income',         val: 'High Match', warn: false },
-      { key: 'Family Values',  val: 'Identical',  warn: false },
-      { key: 'Location',       val: 'Local',      warn: false },
-      { key: 'Lifestyle',      val: 'Balanced',   warn: false },
-    ],
-    aiInsight: '"Marcus demonstrates a 98% value-alignment with Julianne\'s stated desire for long-term philanthropic partnership. Their shared interest in brutalist architecture and venture capital creates a unique intellectual common ground. Recommend emphasizing his recent sabbatical in Patagonia during the introduction."',
-    photoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBRphnh3DoTE69F5x-nFWrx0vRjiRWT_ZTyF3muoaLhxlHc3606O6FdifXuF0vWERSw3DYt89LJyNuSw5RBRVvnSyCvPjG82xEU1SLwzRb748Lfdhza11PlgjXN3_5crNqP7kqlyby037hEaeB8FBXXJs-jPJHZmE26f-Lq9zNu5ndCKRQkDzysZsdBDGyLS4lB1IFQNf0BOUrvTlpaGRtW8oWVAJEdCP9choGD8OlbP2h6X8OdAPvRMWfHBtwUhBvaen9dGIKEDtg',
-  },
-  {
-    id: 2,
-    name:    'Soren Haug',
-    sub:     '41 • London • Creative Director',
-    score:   92,
-    traits:  [
-      { label: 'Art Collector', highlight: false },
-      { label: 'Dog Owner',     highlight: false },
-    ],
-    breakdown: [
-      { key: 'Children Pref.', val: 'Match',         warn: false },
-      { key: 'Age Gap',        val: 'Good',           warn: false },
-      { key: 'Height',         val: 'Ideal',          warn: false },
-      { key: 'Income',         val: 'Match',          warn: false },
-      { key: 'Family Values',  val: 'High',           warn: false },
-      { key: 'Location',       val: 'International',  warn: false },
-      { key: 'Lifestyle',      val: 'Artistic',       warn: false },
-    ],
-    aiInsight: '"Soren matches Julianne\'s aesthetic sensibilities perfectly. As a Creative Director, his lifestyle mirrors her interest in the contemporary art scene. Both have histories of residence in Oslo, providing a strong cultural anchor."',
-    photoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBGA77G193osI_ZXLBGTmsf3LB7rWpZ_0loJXZ--ndnKqHUIBmYeEtY42Qql0jvviN9PSWt7y5USsofDV7IhPPyLi04mlSDMFjmEsIzeiyYA60rW82K6ZsTEviKADYY3Dh0BQZXU94a4mzH4BaO_hRbQ7CGMDhLhTVnnz_RqhaQUbN1JPELtBvFlcgsNUfdiKafc0O0zhC5Q4zzfBBoNLfTtE0-m_fYACihA9ha72vyWHybjZTDptU8QtV-BXN4N7LVOV6r1Gqv388',
-  },
-  {
-    id: 3,
-    name:    'Elias Vance',
-    sub:     '39 • Austin • Fintech Founder',
-    score:   78,
-    traits:  [
-      { label: 'Fintech Leader', highlight: false },
-      { label: 'Serial Founder', highlight: false },
-    ],
-    breakdown: [
-      { key: 'Children Pref.', val: 'Match',        warn: false },
-      { key: 'Age Gap',        val: 'Good',          warn: false },
-      { key: 'Height',         val: 'Ideal',         warn: false },
-      { key: 'Income',         val: 'High',          warn: false },
-      { key: 'Family Values',  val: 'Moderate',      warn: false },
-      { key: 'Location',       val: 'Moderate Gap',  warn: true  },
-      { key: 'Lifestyle',      val: 'Balanced',      warn: false },
-    ],
-    aiInsight: '"Elias represents a \'growth match\'. While currently based in Austin, his expansion plans for 2024 include a London office, potentially resolving the geographical mismatch. Intellectually, they are extremely well aligned."',
-    photoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCGpbTnmgfGXzJK7yTPJu-Qs-lBK5pjaWoulk9ebquNBJkEC48KdiooWGWp6yK-ck17qI7ogJgVcWzkRDCj1tQZZuAINc85OJhGlAgOtjsH988RPEEFWgMbN0ZC9vzFXW2jQwPVldOjPyMn7015oBMZVTLPjpY_WydfTw3hutUx8uHz4vOy1tTQ9XzpJN766MPYU0O1yHdPXxyJcnTK1tufGqWCYHjTj-7CICyrnglQLv9j-l2uDGalaB32mEmUV5lNHRQ9kIKYXtA',
-  },
-  {
-    id: 4,
-    name:    'Aiden Marlowe',
-    sub:     '36 • New York • Investment Banker',
-    score:   85,
-    traits:  [
-      { label: 'World Traveler', highlight: false },
-      { label: 'Culinary Arts',  highlight: true  },
-    ],
-    breakdown: [
-      { key: 'Children Pref.', val: 'Match',   warn: false },
-      { key: 'Age Gap',        val: 'Optimal', warn: false },
-      { key: 'Height',         val: 'Ideal',   warn: false },
-      { key: 'Income',         val: 'High',    warn: false },
-      { key: 'Family Values',  val: 'Strong',  warn: false },
-      { key: 'Location',       val: 'Close',   warn: false },
-      { key: 'Lifestyle',      val: 'Active',  warn: false },
-    ],
-    aiInsight: '"Aiden\'s cosmopolitan lifestyle and appreciation for fine dining closely mirrors Julianne\'s known preferences. His NY base provides logistical ease for first meetings and his investment background aligns with her financial expectations."',
-    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop&crop=face',
-  },
-]
-
 const NAV = [
-  { icon: 'dashboard', label: 'Dashboard',     active: false },
-  { icon: 'group',     label: 'Customers',     active: true  },
-  { icon: 'search',    label: 'Global Search', active: false },
-  { icon: 'event',     label: 'Calendar',      active: false },
+  { icon: 'dashboard', label: 'Dashboard',     path: '/'          },
+  { icon: 'group',     label: 'Customers',     path: '/customers', active: true },
+  { icon: 'search',    label: 'Global Search', path: '/'          },
+  { icon: 'event',     label: 'Calendar',      path: '/'          },
 ]
 
-/* ── Match Card ────────────────────────────────────────────── */
-function MatchCard({ candidate }) {
-  const tier = getTier(candidate.score)
-  const tierLabel = getTierLabel(candidate.score)
+/* ── Match card ────────────────────────────────────────────── */
+function MatchCard({ candidate, customerId }) {
+  const tier      = getTier(candidate.compatibility_score)
+  const tierLabel = getTierLabel(candidate.compatibility_score)
 
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showAI,        setShowAI]        = useState(false)
   const [sent,          setSent]          = useState(false)
+  const [sending,       setSending]       = useState(false)
   const [barWidth,      setBarWidth]      = useState(0)
 
-  // Animate bar on mount
   useEffect(() => {
-    const t = setTimeout(() => setBarWidth(candidate.score), 120)
+    const t = setTimeout(() => setBarWidth(candidate.compatibility_score), 150)
     return () => clearTimeout(t)
-  }, [candidate.score])
+  }, [candidate.compatibility_score])
 
-  function handleSend() {
-    if (sent) return
-    setSent(true)
-    // TODO: POST /api/matches/send { candidateId, clientId }
+  async function handleSend() {
+    if (sent || sending) return
+    setSending(true)
+    try {
+      await matchesApi.sendMatch(customerId, candidate.id, candidate.compatibility_score)
+      setSent(true)
+    } catch (err) {
+      alert(err.message || 'Failed to send match.')
+    } finally {
+      setSending(false)
+    }
   }
+
+  // Build traits from breakdown + score label
+  const traits = []
+  if (candidate.match_label)       traits.push({ label: candidate.match_label, highlight: true })
+  if (candidate.religion)          traits.push({ label: candidate.religion, highlight: false })
+  if (candidate.diet)              traits.push({ label: candidate.diet, highlight: false })
+  if (candidate.family_values)     traits.push({ label: candidate.family_values, highlight: false })
+  if (candidate.activity_multiplier < 0.9) traits.push({ label: 'Less Active Profile', highlight: false })
+
+  // Build breakdown rows from score_breakdown
+  const bd = candidate.score_breakdown || {}
+  const breakdownRows = Object.entries(bd).map(([key, val]) => ({
+    key: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    val: typeof val === 'number' ? `${val} pts` : String(val),
+    warn: val === 0 || val === false,
+  }))
 
   return (
     <div className={`mp-card ${tier}`}>
-
-      {/* Main content */}
       <div className="mp-card-main">
-        {/* Photo */}
         <div className="mp-card-photo-wrap">
-          <img className="mp-card-photo" src={candidate.photoUrl} alt={candidate.name} />
+          {candidate.photo_url ? (
+            <img className="mp-card-photo" src={candidate.photo_url} alt={candidate.first_name} />
+          ) : (
+            <div className="mp-card-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:800,color:'#C8920A' }}>
+              {`${candidate.first_name?.[0]??''}${candidate.last_name?.[0]??''}`.toUpperCase()}
+            </div>
+          )}
         </div>
 
-        {/* Info */}
         <div className="mp-card-info">
           <div className="mp-card-top">
             <div>
-              <div className="mp-candidate-name">{candidate.name}</div>
-              <div className="mp-candidate-sub">{candidate.sub}</div>
+              <div className="mp-candidate-name">{candidate.first_name} {candidate.last_name}</div>
+              <div className="mp-candidate-sub">
+                {candidate.age} • {candidate.city} • {candidate.occupation}
+              </div>
             </div>
             <div className={`mp-score-block ${tier}`}>
               <div className="mp-score-tier">{tierLabel}</div>
               <div className="mp-score-number">
-                {candidate.score}<span className="mp-score-pct">%</span>
+                {Math.round(candidate.compatibility_score)}<span className="mp-score-pct">%</span>
               </div>
             </div>
           </div>
 
-          {/* Score bar */}
           <div className="mp-score-bar-track">
-            <div
-              className="mp-score-bar-fill"
-              style={{ width: `${barWidth}%` }}
-            />
+            <div className="mp-score-bar-fill" style={{ width: `${barWidth}%` }} />
           </div>
 
-          {/* Trait chips */}
           <div className="mp-traits">
-            {candidate.traits.map(t => (
-              <span
-                key={t.label}
-                className={`mp-trait ${t.highlight ? 'highlight' : 'default'}`}
-              >
+            {traits.slice(0, 4).map(t => (
+              <span key={t.label} className={`mp-trait ${t.highlight ? 'highlight' : 'default'}`}>
                 {t.label}
               </span>
             ))}
@@ -189,74 +112,99 @@ function MatchCard({ candidate }) {
         </div>
       </div>
 
-      {/* Compatibility breakdown (collapsible) */}
+      {/* Breakdown */}
       <div className={`mp-breakdown ${showBreakdown ? 'mp-breakdown-open' : ''}`}>
-        <div
-          className="mp-breakdown-summary"
-          onClick={() => setShowBreakdown(p => !p)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={e => e.key === 'Enter' && setShowBreakdown(p => !p)}
-        >
+        <div className="mp-breakdown-summary" onClick={() => setShowBreakdown(p => !p)} role="button" tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && setShowBreakdown(p => !p)}>
           <span>Compatibility Breakdown</span>
           <span className="ms">expand_more</span>
         </div>
         <div className="mp-breakdown-body">
-          {candidate.breakdown.map((row, i) => (
+          {breakdownRows.slice(0, 8).map((row, i) => (
             <div key={i} className="mp-breakdown-row">
               <span className="mp-breakdown-key">{row.key}</span>
               <span className={`mp-breakdown-val ${row.warn ? 'warn' : ''}`}>{row.val}</span>
             </div>
           ))}
+          {breakdownRows.length === 0 && (
+            <div style={{ fontSize: 12, color: '#aaa', padding: '8px 0' }}>No breakdown available.</div>
+          )}
         </div>
       </div>
 
       {/* Actions */}
       <div className="mp-actions">
-        <button
-          className="mp-ai-btn"
-          id={`ai-btn-${candidate.id}`}
-          onClick={() => setShowAI(true)}
-        >
-          <span className="ms">psychology</span>
-          AI Insights
+        <button className="mp-ai-btn" id={`ai-btn-${candidate.id}`} onClick={() => setShowAI(true)}>
+          <span className="ms">psychology</span>AI Insights
         </button>
         <button
           className={`mp-send-btn ${sent ? 'sent' : ''}`}
           id={`send-btn-${candidate.id}`}
           onClick={handleSend}
-          disabled={sent}
+          disabled={sent || sending}
         >
           <span className="ms">{sent ? 'check_circle' : 'send'}</span>
-          {sent ? 'Sent to Client' : 'Send Match'}
+          {sending ? 'Sending…' : sent ? 'Sent to Client' : 'Send Match'}
         </button>
       </div>
 
-      {/* AI Insights overlay */}
+      {/* AI overlay */}
       <div className={`mp-ai-overlay ${showAI ? 'visible' : ''}`}>
         <div className="mp-ai-overlay-head">
           <div className="mp-ai-overlay-title">✦ Intelligence Report</div>
-          <button
-            className="mp-ai-close-btn"
-            id={`ai-close-${candidate.id}`}
-            onClick={() => setShowAI(false)}
-          >
+          <button className="mp-ai-close-btn" id={`ai-close-${candidate.id}`} onClick={() => setShowAI(false)}>
             <span className="ms">close</span>
           </button>
         </div>
-        <p className="mp-ai-overlay-text">{candidate.aiInsight}</p>
+        <p className="mp-ai-overlay-text">
+          {candidate.first_name} is a {tierLabel.toLowerCase()} for this client with a compatibility score of{' '}
+          {Math.round(candidate.compatibility_score)}%.
+          {candidate.education ? ` Education: ${candidate.education}.` : ''}
+          {candidate.want_kids !== undefined ? ` Wants kids: ${candidate.want_kids ? 'Yes' : 'No'}.` : ''}
+          {candidate.languages?.length ? ` Languages: ${candidate.languages.join(', ')}.` : ''}
+          {candidate.family_values ? ` Family values: ${candidate.family_values}.` : ''}
+        </p>
       </div>
-
     </div>
   )
 }
 
 /* ── Page ──────────────────────────────────────────────────── */
 export default function MatchingPage() {
-  const [search, setSearch] = useState('')
+  const { id }   = useParams()  // customerId
+  const navigate = useNavigate()
+  const { matchmaker, logout } = useAuth()
 
-  const visible = CANDIDATES.filter(c =>
-    !search || c.name.toLowerCase().includes(search.toLowerCase())
+  const [matches,       setMatches]       = useState([])
+  const [customerName,  setCustomerName]  = useState('')
+  const [customerPhoto, setCustomerPhoto] = useState('')
+  const [totalMatches,  setTotalMatches]  = useState(0)
+  const [excludedCount, setExcludedCount] = useState(0)
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState('')
+  const [search,        setSearch]        = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('')
+    try {
+      const res = await matchesApi.getMatches(id)
+      setMatches(res.data)
+      setCustomerName(res.customer_name || '')
+      setTotalMatches(res.total_matches || 0)
+      setExcludedCount(res.excluded_count || 0)
+    } catch (err) {
+      if (err.status === 401) { logout(); navigate('/login') }
+      setError(err.message || 'Failed to load matches.')
+    } finally {
+      setLoading(false)
+    }
+  }, [id, logout, navigate])
+
+  useEffect(() => { load() }, [load])
+
+  const visible = matches.filter(c =>
+    !search ||
+    `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -266,32 +214,18 @@ export default function MatchingPage() {
       <aside className="mp-sidebar">
         <div className="mp-brand-name">The Date Crew</div>
         <div className="mp-brand-sub">Matchmaker Portal</div>
-
-        <button className="mp-new-btn" id="mp-new-case-btn">
-          <span className="ms">add</span>
-          New Matchmaking Case
-        </button>
-
+        <button className="mp-new-btn" id="mp-new-case-btn"><span className="ms">add</span>New Matchmaking Case</button>
         <nav className="mp-nav">
           {NAV.map(item => (
-            <button
-              key={item.label}
-              className={`mp-nav-link ${item.active ? 'active' : ''}`}
-              id={`mp-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <span className="ms">{item.icon}</span>
-              {item.label}
+            <button key={item.label} className={`mp-nav-link ${item.active ? 'active' : ''}`}
+              onClick={() => navigate(item.path)} id={`mp-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}>
+              <span className="ms">{item.icon}</span>{item.label}
             </button>
           ))}
         </nav>
-
         <div className="mp-sidebar-footer">
-          <button className="mp-nav-link" id="mp-nav-support">
-            <span className="ms">help</span>Support
-          </button>
-          <button className="mp-nav-link" id="mp-nav-signout">
-            <span className="ms">logout</span>Sign Out
-          </button>
+          <button className="mp-nav-link" id="mp-nav-support"><span className="ms">help</span>Support</button>
+          <button className="mp-nav-link" id="mp-nav-signout" onClick={logout}><span className="ms">logout</span>Sign Out</button>
         </div>
       </aside>
 
@@ -302,78 +236,86 @@ export default function MatchingPage() {
         <header className="mp-topbar">
           <div className="mp-search-wrap">
             <span className="ms mp-search-icon">search</span>
-            <input
-              id="mp-search"
-              className="mp-search-input"
-              type="text"
-              placeholder="Search matches..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <input id="mp-search" className="mp-search-input" type="text"
+              placeholder="Search candidates..." value={search}
+              onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="mp-topbar-right">
-            <button className="mp-icon-btn" id="mp-notif-btn" title="Notifications">
-              <span className="ms">notifications</span>
-            </button>
-            <button className="mp-icon-btn" id="mp-settings-btn" title="Settings">
-              <span className="ms">settings</span>
-            </button>
-            <img
-              className="mp-topbar-avatar"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq8wpLjKXfJUrRvNcjwdY1kvqogj_rfcK8FHUn6GbBHFNogIXg2f5jlbQB-61iZVDRJd6HrQMgUhkuTXvJ2z7mp0rdyANjDghsKHOA4ky7PlF_G84GDajXpdz0qsLe3h6HEczwrh1etz0H-aqMKh3yigcb513DzY_QFIRkdl6nLnKumxNNXy3pUmUcrp5C5rS7wXhGPvxfnJlWTrNnys2X7Kx8qVeuKIsBdgdw0uMhzE7l6dK6rLj1aUuH43cg7bVxaxhPjs_DXV4"
-              alt="Matchmaker avatar"
-            />
+            <button className="mp-icon-btn" id="mp-notif-btn"><span className="ms">notifications</span></button>
+            <button className="mp-icon-btn" id="mp-settings-btn"><span className="ms">settings</span></button>
+            <div style={{ width:30,height:30,borderRadius:'50%',background:'#C8920A',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700 }}>
+              {matchmaker?.name?.split(' ').map(w=>w[0]).join('').slice(0,2)||'MM'}
+            </div>
           </div>
         </header>
 
         {/* Canvas */}
         <div className="mp-canvas">
 
-          {/* Hero header */}
+          {/* Hero */}
           <section className="mp-hero">
             <div className="mp-hero-photo-wrap">
-              <img className="mp-hero-photo" src={CLIENT.photoUrl} alt={CLIENT.name} />
+              {customerPhoto ? (
+                <img className="mp-hero-photo" src={customerPhoto} alt={customerName} />
+              ) : (
+                <div className="mp-hero-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:800,color:'#C8920A' }}>
+                  {customerName.split(' ').map(w=>w[0]).join('').slice(0,2)}
+                </div>
+              )}
             </div>
             <div className="mp-hero-info">
               <div className="mp-hero-eyebrow">✦ Active Discovery</div>
-              <h1 className="mp-hero-title">Finding matches for {CLIENT.name}</h1>
-              <p className="mp-hero-sub">
-                <strong>{CLIENT.total} candidates</strong> pre-filtered based on core preferences and psychological alignment.
-              </p>
-              <p className="mp-hero-note">
-                {CLIENT.hidden} candidates were automatically hidden because they were already sent or marked Interested.
-              </p>
+              <h1 className="mp-hero-title">
+                Finding matches for {customerName || '…'}
+              </h1>
+              {loading ? (
+                <p className="mp-hero-sub">Loading candidates…</p>
+              ) : (
+                <>
+                  <p className="mp-hero-sub">
+                    <strong>{totalMatches} candidates</strong> pre-filtered based on core preferences and psychological alignment.
+                  </p>
+                  <p className="mp-hero-note">
+                    {excludedCount} candidates were automatically hidden because they were already sent or marked Interested.
+                  </p>
+                </>
+              )}
             </div>
           </section>
 
+          {/* Error */}
+          {error && (
+            <div style={{ padding:'12px 28px', color:'#C62828', fontSize: 13 }}>{error}</div>
+          )}
+
           {/* Grid */}
           <div className="mp-grid-wrap">
-            <div className="mp-grid">
-              {visible.map(c => (
-                <MatchCard key={c.id} candidate={c} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="mp-grid" style={{ display:'flex',alignItems:'center',justifyContent:'center',height:200,gridColumn:'1/-1' }}>
+                <span style={{ color:'#777',fontSize:14 }}>Running match engine…</span>
+              </div>
+            ) : (
+              <div className="mp-grid">
+                {visible.map(c => (
+                  <MatchCard key={c.id} candidate={c} customerId={id} />
+                ))}
+                {visible.length === 0 && (
+                  <div style={{ gridColumn:'1/-1',padding:24,color:'#777',fontSize:13 }}>
+                    No candidates found{search ? ` for "${search}"` : ''}.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Footer legend */}
+          {/* Footer */}
           <footer className="mp-footer">
             <div className="mp-legend">
-              <span className="mp-legend-item">
-                <span className="mp-legend-dot excellent" />
-                90%+ Match
-              </span>
-              <span className="mp-legend-item">
-                <span className="mp-legend-dot good" />
-                70–89% Match
-              </span>
-              <span className="mp-legend-item">
-                <span className="mp-legend-dot fair" />
-                &lt;70% Match
-              </span>
+              <span className="mp-legend-item"><span className="mp-legend-dot excellent"/>90%+ Excellent</span>
+              <span className="mp-legend-item"><span className="mp-legend-dot good"/>70–89% Good</span>
+              <span className="mp-legend-item"><span className="mp-legend-dot fair"/>&lt;70% Fair</span>
             </div>
-            <span className="mp-footer-note">
-              Viewing pre-filtered subset • Sorted by Score (Descending)
-            </span>
+            <span className="mp-footer-note">Sorted by Score (Descending) • Live Match Engine</span>
           </footer>
 
         </div>

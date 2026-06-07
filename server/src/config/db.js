@@ -8,10 +8,10 @@ process.env.NODE_NO_WARNINGS = '1';
 
 const pool = new Pool({
   connectionString: config.databaseUrl,
-  ssl: { rejectUnauthorized: false }, // required for Neon DB proxy connections
+  ssl: config.databaseUrl.includes('neon.tech') ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
+  connectionTimeoutMillis: 10_000,
 });
 
 // Called once at startup to confirm DB is reachable before accepting traffic

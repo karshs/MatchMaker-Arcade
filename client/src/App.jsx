@@ -1,8 +1,78 @@
-import MatchingPage from './pages/MatchingPage'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import LoginPage         from './pages/LoginPage'
+import DashboardPage     from './pages/DashboardPage'
+import CustomerDetailPage from './pages/CustomerDetailPage'
+import MatchingPage      from './pages/MatchingPage'
 
-export default function App() {
-  // TODO: React Router will wire all pages together.
-  return <MatchingPage />
+/* ── Protected route — redirects to /login if not authenticated ── */
+function PrivateRoute({ children }) {
+  const { matchmaker, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Geist, Inter, sans-serif', fontSize: 14, color: '#777'
+      }}>
+        Loading…
+      </div>
+    )
+  }
+
+  return matchmaker ? children : <Navigate to="/login" replace />
 }
 
+/* ── Login route — redirects to / if already authenticated ── */
+function PublicRoute({ children }) {
+  const { matchmaker, loading } = useAuth()
+  if (loading) return null
+  return matchmaker ? <Navigate to="/" replace /> : children
+}
 
+/* ── Root app — Router + Auth wiring ── */
+function AppRoutes() {
+  const { login } = useAuth()
+
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={
+        <PublicRoute>
+          <LoginPage onLogin={login} />
+        </PublicRoute>
+      } />
+
+      {/* Protected */}
+      <Route path="/" element={
+        <PrivateRoute><DashboardPage /></PrivateRoute>
+      } />
+
+      <Route path="/customers" element={
+        <PrivateRoute><DashboardPage /></PrivateRoute>
+      } />
+
+      <Route path="/customers/:id" element={
+        <PrivateRoute><CustomerDetailPage /></PrivateRoute>
+      } />
+
+      <Route path="/customers/:id/matches" element={
+        <PrivateRoute><MatchingPage /></PrivateRoute>
+      } />
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}

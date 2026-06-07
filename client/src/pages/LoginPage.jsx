@@ -50,8 +50,9 @@ const ShieldIcon = () => (
 )
 
 /* ── Component ─────────────────────────────────────────────── */
-export default function LoginPage() {
-  const [username, setUsername] = useState('')
+// onLogin(email, password) is injected by App.jsx (calls useAuth().login)
+export default function LoginPage({ onLogin }) {
+  const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
@@ -60,28 +61,17 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
 
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       setError('Please fill in all fields.')
       return
     }
 
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.message || 'Invalid credentials. Please try again.')
-      } else {
-        // TODO: store token & redirect to dashboard
-        console.log('Login successful:', data)
-      }
-    } catch {
-      setError('Network error — please try again.')
+      await onLogin(email.trim(), password)
+      // Navigation handled by App.jsx after onLogin resolves
+    } catch (err) {
+      setError(err.message || 'Invalid credentials. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -107,16 +97,16 @@ export default function LoginPage() {
         <form className="login-form" onSubmit={handleSubmit} noValidate>
 
           <div className="login-field">
-            <label className="login-label" htmlFor="login-username">Username</label>
+            <label className="login-label" htmlFor="login-email">Email</label>
             <div className="login-input-wrap">
               <UserIcon />
               <input
-                id="login-username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoComplete="username"
+                id="login-email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
                 autoFocus
               />
             </div>
