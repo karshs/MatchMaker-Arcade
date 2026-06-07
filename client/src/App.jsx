@@ -1,8 +1,7 @@
-import DashboardPage from './pages/DashboardPage'
+import CustomerDetailPage from './pages/CustomerDetailPage'
 
 export default function App() {
-  // TODO: add React Router + auth guard.
-  // Switch to LoginPage import when adding routing.
-  return <DashboardPage />
+  // TODO: React Router will wire all pages together.
+  return <CustomerDetailPage />
 }
 

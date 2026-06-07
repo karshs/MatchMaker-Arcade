@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Stitch design export folders (not needed in repo)
+public/Dashboard/
+public/Customer_Detialed/
