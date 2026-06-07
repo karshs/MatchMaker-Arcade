@@ -396,34 +396,73 @@ function interestsOverlap(a, b) {
   return ai.filter(i => bi.includes(i)).length;
 }
 
-// ── Main Engine Function ───────────────────────────────────────────────────────
-// Takes one customer and an array of all other active customers.
-// Returns top N matches sorted by score (desc), with interests overlap as tiebreaker.
+// ── Activity Decay Multiplier ──────────────────────────────────────────────────
+// Demotes stale profiles so active clients surface first.
+// Based on the industry "zombie penalty" pattern used by The Date Crew and
+// similar platforms (see Research.md — Activity Decay section).
+//
+// Multiplier is applied to the raw score AFTER gender scoring, so the
+// breakdown still reflects pure compatibility — decay is a ranking signal only.
+//
+// Tiers (Research.md recommendation adapted for matrimony context):
+//   < 7 days  → 1.00 (fully active — no penalty)
+//   < 30 days → 0.90 (recently active — slight nudge down)
+//   < 90 days → 0.75 (dormant — noticeable demotion)
+//   ≥ 90 days → 0.60 (zombie — pushed to bottom of list)
 
-function findMatches(customer, allCandidates, topN = 20) {
+function getActivityMultiplier(lastUpdated) {
+  if (!lastUpdated) return 0.80; // unknown activity — conservative penalty
+  const daysSince = (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSince < 7)  return 1.00;
+  if (daysSince < 30) return 0.90;
+  if (daysSince < 90) return 0.75;
+  return 0.60;
+}
+
+// ── Main Engine Function ───────────────────────────────────────────────────────
+// Takes one customer and an array of all other active candidates.
+// Returns top N matches sorted by decayed score (desc), interests overlap as tiebreaker.
+//
+// Parameters:
+//   customer      — the profile we are finding matches for
+//   allCandidates — all active profiles from the DB
+//   topN          — how many matches to return (default 20)
+//   excludeIds    — Set of candidate IDs to skip (already-sent matches etc.)
+
+function findMatches(customer, allCandidates, topN = 20, excludeIds = new Set()) {
   const results = [];
 
   for (const candidate of allCandidates) {
     // Skip the customer themselves
     if (candidate.id === customer.id) continue;
 
+    // Skip already-sent / already-matched candidates (populated by the controller)
+    if (excludeIds.has(candidate.id)) continue;
+
     const filter = hardFilter(customer, candidate);
     if (!filter.passed) continue; // eliminated by hard filter
 
-    const { score, breakdown } = scoreMatch(customer, candidate);
+    const { score: rawScore, breakdown } = scoreMatch(customer, candidate);
+
+    // Apply activity decay — demotes stale profiles without hiding them
+    const activityMultiplier = getActivityMultiplier(candidate.last_updated);
+    const score = Math.round(Math.min(100, rawScore * activityMultiplier));
+
     const overlap = interestsOverlap(customer, candidate);
     const label   = getMatchLabel(score);
 
     results.push({
       candidate,
-      score,
+      score,                         // decayed final score used for ranking
+      raw_score:          rawScore,  // pure compatibility score before decay
+      activity_multiplier: activityMultiplier, // exposed so UI can show "profile inactive"
       breakdown,
-      match_label:        label,   // e.g. "Excellent Match"
-      interests_overlap:  overlap, // used as tiebreaker, also exposed to UI
+      match_label:        label,
+      interests_overlap:  overlap,
     });
   }
 
-  // Primary sort: score descending
+  // Primary sort: decayed score descending
   // Secondary sort: interests overlap descending (tiebreaker when scores are equal)
   results.sort((a, b) => b.score - a.score || b.interests_overlap - a.interests_overlap);
 
@@ -437,6 +476,7 @@ module.exports = {
   scoreMaleCustomer,
   scoreFemaleCustomer,
   getMatchLabel,
+  getActivityMultiplier,
   getAge,
 };
 
