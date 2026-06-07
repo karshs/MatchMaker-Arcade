@@ -2,6 +2,11 @@
    GLOBAL CSS — The Date Crew | Golden Yellow Theme
    ============================================================ */
 
+/* ── Scale fix — prevents the card looking zoomed-in ──────── */
+html {
+  font-size: 14px;   /* 14px base = visually comfortable on 1080p+ */
+}
+
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Primary golden-yellow palette */

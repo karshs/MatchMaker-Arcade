@@ -1,7 +1,8 @@
-import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/DashboardPage'
 
 export default function App() {
-  // Router will be added as we build more screens.
-  // For now, render Login directly.
-  return <LoginPage />
+  // TODO: add React Router + auth guard.
+  // Switch to LoginPage import when adding routing.
+  return <DashboardPage />
 }
+

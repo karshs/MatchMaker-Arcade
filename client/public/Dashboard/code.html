@@ -1,0 +1,447 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Liaison CRM | Matchmaker Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Geist', sans-serif;
+            background-color: #fbf9f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e3e2e2;
+            border-radius: 10px;
+        }
+        .summary-card {
+            background: #ffffff;
+            border: 1px solid #c4c7c7;
+            transition: all 0.3s ease;
+        }
+        .summary-card:hover {
+            border-color: #735c00;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .premium-accent-bg {
+            background-color: #FBFFB9;
+        }
+        .text-accent-header {
+            color: #223843;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#474744",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#241a00",
+                        "on-error": "#ffffff",
+                        "primary-container": "#1c1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        error: "#ba1a1a",
+                        "surface-container": "#efeded",
+                        "on-error-container": "#93000a",
+                        secondary: "#735c00",
+                        "surface-bright": "#fbf9f9",
+                        "surface-variant": "#e3e2e2",
+                        "on-secondary-container": "#745c00",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#e9c349",
+                        surface: "#fbf9f9",
+                        "tertiary-fixed": "#e4e2dd",
+                        "on-primary-fixed-variant": "#474746",
+                        "on-tertiary-fixed": "#1b1c19",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-container-low": "#f5f3f3",
+                        tertiary: "#000000",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#fed65b",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "inverse-primary": "#c8c6c5",
+                        "on-secondary-fixed-variant": "#574500",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#ffe088",
+                        "on-background": "#1b1c1c",
+                        "tertiary-fixed-dim": "#c8c6c2",
+                        primary: "#000000",
+                        "tertiary-container": "#1b1c19",
+                        "on-surface": "#1b1c1c",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-tint": "#5f5e5e",
+                        "on-surface-variant": "#444748",
+                        "primary-fixed": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "inverse-surface": "#303031",
+                        background: "#fbf9f9",
+                        "surface-container-highest": "#e3e2e2",
+                        "on-primary-container": "#858383",
+                        outline: "#747878",
+                        "on-tertiary-container": "#848480",
+                        "outline-variant": "#c4c7c7",
+                        "surface-dim": "#dbdad9"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        xl: "40px",
+                        lg: "24px",
+                        xs: "4px",
+                        base: "4px",
+                        gutter: "20px",
+                        md: "16px",
+                        sm: "8px",
+                        sidebar_width: "260px",
+                        max_content_width: "1200px"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Geist"],
+                        "body-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "mono-label": ["Geist Mono"],
+                        display: ["Geist"],
+                        "body-lg": ["Geist"],
+                        "label-md": ["Geist"],
+                        headline: ["Geist"],
+                        body: ["Geist"],
+                        label: ["Geist"]
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- Sidebar Component -->
+<aside class="fixed left-0 h-full w-sidebar_width bg-surface-container-low border-r border-outline-variant flex flex-col p-md gap-sm z-50">
+<div class="mb-lg px-xs">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Dossier Elite</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Matchmaking Boutique</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg mb-md hover:opacity-90 transition-opacity flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            New Matchmaking Case
+        </button>
+<nav class="flex-1 space-y-xs">
+<a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container font-bold rounded-lg duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Customers</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-body-md text-body-md">Global Search</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">event</span>
+<span class="font-body-md text-body-md">Calendar</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant pt-sm space-y-xs">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md text-body-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar_width min-h-screen flex flex-col">
+<!-- TopAppBar Component -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-lg py-sm w-full bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center border border-secondary text-secondary">
+<span class="font-headline-md">JP</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-accent-header font-bold">Julianne Pierre</h2>
+<span class="font-label-md text-label-md text-on-surface-variant">Senior Matchmaker</span>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<div class="relative group">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+</span>
+<input class="pl-10 pr-md py-xs bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md focus:outline-none focus:border-secondary w-64 transition-all" placeholder="Quick search dossier..." type="text">
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span>
+</div>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<div class="p-lg md:p-xl max-w-max_content_width mx-auto w-full flex-1 flex flex-col gap-lg">
+<!-- Summary Stats -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<div class="summary-card p-lg rounded-lg border border-outline-variant bg-white shadow-sm" style="transform: translateY(0px);"><p class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase tracking-widest font-bold">Active Customers</p><h3 class="text-[32px] leading-tight text-accent-header font-bold tracking-tight">124</h3></div>
+<div class="summary-card p-lg rounded-lg border border-outline-variant bg-white shadow-sm" style="transform: translateY(0px);"><p class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase tracking-widest font-bold">Currently Searching</p><h3 class="text-[32px] leading-tight text-accent-header font-bold tracking-tight">42</h3></div>
+<div class="summary-card p-lg rounded-lg border border-outline-variant bg-white shadow-sm" style="transform: translateY(0px);"><p class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase tracking-widest font-bold">Matches This Week</p><div class="flex items-baseline gap-sm"><h3 class="text-[32px] leading-tight text-accent-header font-bold tracking-tight">18</h3><span class="text-secondary font-mono-label text-mono-label flex items-center gap-xs font-bold"><span class="material-symbols-outlined text-[14px]">trending_up</span>12%</span></div></div>
+<div class="summary-card p-lg rounded-lg border border-outline-variant bg-white shadow-sm" style="transform: translateY(0px);"><p class="font-label-md text-label-md text-on-surface-variant mb-xs uppercase tracking-widest font-bold">Successful Matches</p><h3 class="text-[32px] leading-tight text-accent-header font-bold tracking-tight">306</h3></div>
+</section>
+<!-- Priority Clients Section -->
+<section class="bg-surface border border-outline-variant rounded-lg shadow-sm flex flex-col min-h-[600px] overflow-hidden">
+<div class="p-lg border-b border-outline-variant flex flex-col xl:flex-row xl:items-center justify-between gap-md bg-white">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">star</span>
+<h4 class="font-headline-md text-headline-md text-accent-header font-bold">Priority Client Dossier</h4>
+</div>
+<div class="flex flex-wrap items-center gap-sm">
+<div class="flex items-center gap-xs text-on-surface-variant mr-sm">
+<span class="material-symbols-outlined text-[18px]">filter_alt</span>
+<span class="font-label-md text-label-md uppercase tracking-wider font-bold">Filters:</span>
+</div>
+<select class="bg-surface-container-low border border-outline-variant rounded px-sm py-1 font-label-md text-label-md text-on-surface-variant outline-none focus:border-secondary">
+<option>Stage: All</option>
+<option>Searching</option>
+<option>Interested</option>
+</select>
+<select class="bg-surface-container-low border border-outline-variant rounded px-sm py-1 font-label-md text-label-md text-on-surface-variant outline-none focus:border-secondary">
+<option>Religion: Any</option>
+<option>Hindu</option>
+<option>Christian</option>
+<option>Muslim</option>
+</select>
+<select class="bg-surface-container-low border border-outline-variant rounded px-sm py-1 font-label-md text-label-md text-on-surface-variant outline-none focus:border-secondary">
+<option>City: All</option>
+<option>London</option>
+<option>New York</option>
+<option>Mumbai</option>
+</select>
+<button class="bg-surface-container-high px-sm py-1 rounded font-label-md text-label-md text-on-surface hover:bg-outline-variant transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+                            More Filters
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar min-h-0">
+<table class="w-full text-left border-collapse table-auto">
+<thead class="sticky top-0 z-20 bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-lg py-md font-mono-label text-mono-label text-accent-header uppercase tracking-widest font-bold whitespace-nowrap">Client</th>
+<th class="px-lg py-md font-mono-label text-mono-label text-accent-header uppercase tracking-widest font-bold whitespace-nowrap">Age / Location</th>
+<th class="px-lg py-md font-mono-label text-mono-label text-accent-header uppercase tracking-widest font-bold whitespace-nowrap">Marital Status</th>
+<th class="px-lg py-md font-mono-label text-mono-label text-accent-header uppercase tracking-widest font-bold whitespace-nowrap">Occupation</th>
+<th class="px-lg py-md font-mono-label text-mono-label text-accent-header uppercase tracking-widest font-bold text-center whitespace-nowrap">Status</th>
+<th class="px-lg py-md font-mono-label text-mono-label text-accent-header uppercase tracking-widest font-bold text-center whitespace-nowrap">Dossier</th>
+<th class="px-lg py-md w-10"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant bg-white">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<img alt="Sophia Chen" class="w-10 h-10 rounded-full object-cover border border-outline-variant shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0VZiuHnFbkZKackbbrV2H0xFIQVqrx5DNijFKDFq474JxzYxLoG0hm5OZGBdTK3QqJUDWnnAFz0uKgGd-tcKgY17he0NLJfGBCVgh86H_0a7SAw4gbxziyo124CXqTR-wXVDny40BxLEpOQ3-cy0XSIXQRV_Un7q7CSvTtm3x2jo2DPFoEXttYZLwtyHhEbckOObSFEb6ak6IyxxjU5J4uVhaZ6KtHSB8Ma-STNU1lUi1ltkBR8dhffqtVMz4TbR_SgZgja9N--w">
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Sophia Chen</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8291</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">29 <span class="opacity-30 mx-1">/</span> San Francisco</td>
+<td class="px-lg py-md font-body-md text-on-surface">Single</td>
+<td class="px-lg py-md font-body-md text-on-surface">Senior Product Designer</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-secondary-container text-on-secondary-container font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-secondary/20">SEARCHING</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<img alt="Marcus Thorne" class="w-10 h-10 rounded-full object-cover border border-outline-variant shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcgXb9e90OiMopI3tXYl4_kn47bKY9XPZusYvIEZdmohfkyKPXk4INJmXMNPp8I8TF_XaEjIoLaT_ALK-JTlFzGvFmsXesuG5QMxplHRY6JL1291AsPU-cud4QrnctEq3c4fbxQWw4Tb9gkica_5M5JVlnpqC6L2-309JyOZG2jL0B3mbGRo_bMGda4g4cRierOHmPiyDIr8XgGakV93p6NtIBca6aQ1STnlEpygyDl4IKvl4hZsTwn2kb6pj_p4BFigy1_fj0xpo">
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Marcus Thorne</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8295</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">42 <span class="opacity-30 mx-1">/</span> London</td>
+<td class="px-lg py-md font-body-md text-on-surface">Divorced</td>
+<td class="px-lg py-md font-body-md text-on-surface">Hedge Fund Manager</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-outline-variant">CALL SCHEDULED</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<img alt="Aisha Malik" class="w-10 h-10 rounded-full object-cover border border-outline-variant shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ6xsDiPeelaKt12DOuiAjjnSlmleROTUHz_TYuBMExzhdPJGG0UEKgZgocmu2R1HgdAF9-kdHQc3IgWkInjPJLTZlzQhUIlRl77-R8AXmvwdiaGByFOHclFbCd1enDmoxE8kavJJ2Kc9prYgRi8Q8G5qiY529vGPn92_zLWv2ts0C_-B3eERkx_ptYMyhsEYor2L9JU_7rQSmxrZJJkTutDidM_EbJ3oZxYDGHHMVEY-S2G384Sc1RgaS01TmEyimvBiYwNeQJ3o">
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Aisha Malik</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8301</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">31 <span class="opacity-30 mx-1">/</span> Dubai</td>
+<td class="px-lg py-md font-body-md text-on-surface">Single</td>
+<td class="px-lg py-md font-body-md text-on-surface">Architecture Director</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-outline-variant">INTERESTED</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">RN</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Rohan Nair</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8305</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">35 <span class="opacity-30 mx-1">/</span> Mumbai</td>
+<td class="px-lg py-md font-body-md text-on-surface">Never Married</td>
+<td class="px-lg py-md font-body-md text-on-surface">Tech Entrepreneur</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-secondary-container text-on-secondary-container font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-secondary/20">SEARCHING</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">EK</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Elena Kovac</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8312</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">27 <span class="opacity-30 mx-1">/</span> Berlin</td>
+<td class="px-lg py-md font-body-md text-on-surface">Single</td>
+<td class="px-lg py-md font-body-md text-on-surface">Legal Consultant</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-outline-variant">UNDER REVIEW</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">JM</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">James Miller</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8318</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">45 <span class="opacity-30 mx-1">/</span> New York</td>
+<td class="px-lg py-md font-body-md text-on-surface">Widowed</td>
+<td class="px-lg py-md font-body-md text-on-surface">Surgeon</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-outline-variant">CALL SCHEDULED</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">SL</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Sarah Lee</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8322</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">33 <span class="opacity-30 mx-1">/</span> Singapore</td>
+<td class="px-lg py-md font-body-md text-on-surface">Single</td>
+<td class="px-lg py-md font-body-md text-on-surface">Marketing Director</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-secondary-container text-on-secondary-container font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-secondary/20">SEARCHING</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">DR</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">David Ross</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8329</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">39 <span class="opacity-30 mx-1">/</span> Toronto</td>
+<td class="px-lg py-md font-body-md text-on-surface">Divorced</td>
+<td class="px-lg py-md font-body-md text-on-surface">Executive Chef</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-outline-variant">INTERESTED</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 9 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">AN</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Anita Nair</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8334</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">26 <span class="opacity-30 mx-1">/</span> Delhi</td>
+<td class="px-lg py-md font-body-md text-on-surface">Single</td>
+<td class="px-lg py-md font-body-md text-on-surface">Civil Engineer</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-secondary-container text-on-secondary-container font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-secondary/20">SEARCHING</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+<!-- Row 10 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant shadow-sm text-on-surface-variant font-bold text-[14px]">TH</div>
+<div><p class="font-body-md text-body-md font-bold text-accent-header">Thomas Hunt</p><span class="text-[10px] font-mono-label text-on-surface-variant opacity-60">#D8341</span></div>
+</div>
+</td>
+<td class="px-lg py-md font-body-md text-on-surface whitespace-nowrap">52 <span class="opacity-30 mx-1">/</span> Sydney</td>
+<td class="px-lg py-md font-body-md text-on-surface">Divorced</td>
+<td class="px-lg py-md font-body-md text-on-surface">Real Estate Developer</td>
+<td class="px-lg py-md text-center"><span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant font-mono-label text-[10px] rounded-full font-bold tracking-widest border border-outline-variant">ACTIVE MATCH</span></td>
+<td class="px-lg py-md text-center"><button class="inline-flex items-center gap-xs px-2 py-1 rounded border border-outline-variant text-secondary font-label-md font-bold hover:bg-surface-container-high transition-colors whitespace-nowrap"><span class="material-symbols-outlined text-[16px]">description</span> View Notes</button></td>
+<td class="px-lg py-md text-right"><button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-lg py-md border-t border-outline-variant bg-surface-container-low flex items-center justify-between">
+<p class="font-label-md text-label-md text-on-surface-variant font-bold">Showing 10 of 124 clients</p>
+<div class="flex gap-sm">
+<button class="p-1 border border-outline-variant rounded hover:bg-surface transition-colors bg-white">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-1 border border-outline-variant rounded hover:bg-surface transition-colors bg-white">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<script>
+        // Micro-interactions and subtle effects
+        document.querySelectorAll('.summary-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Search bar highlight effect
+        const searchInput = document.querySelector('input[type="text"]');
+        if(searchInput) {
+            searchInput.addEventListener('focus', () => {
+                searchInput.parentElement.classList.add('ring-2', 'ring-secondary/20');
+            });
+            searchInput.addEventListener('blur', () => {
+                searchInput.parentElement.classList.remove('ring-2', 'ring-secondary/20');
+            });
+        }
+    </script>
+
+
+
+
+</body></html>
