@@ -1,0 +1,79 @@
+/* ============================================================
+   GLOBAL CSS — The Date Crew | Golden Yellow Theme
+   ============================================================ */
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+  /* Primary golden-yellow palette */
+  --color-primary:        #C8920A;   /* medium-dark golden yellow */
+  --color-primary-deep:   #9E6E00;   /* deep amber for hover */
+  --color-primary-light:  #F5D87A;   /* soft yellow accent */
+  --color-primary-faint:  #FFF8E6;   /* very light warm cream */
+
+  /* Background */
+  --color-bg:             #FFF5D6;   /* warm pale-yellow page bg */
+  --color-card:           #FFFFFF;
+
+  /* Text */
+  --color-text-primary:   #3D2B00;   /* rich dark brown */
+  --color-text-secondary: #7A6030;   /* muted warm brown */
+  --color-text-muted:     #A89060;
+
+  /* Input */
+  --color-input-bg:       #FFFDF5;
+  --color-input-border:   #E8D49A;
+  --color-input-focus:    #C8920A;
+
+  /* Utility */
+  --color-divider:        #ECD99C;
+  --color-shadow:         rgba(180, 130, 0, 0.12);
+
+  /* Typography */
+  --font-family:          'Inter', sans-serif;
+
+  /* Radius */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-pill: 50px;
+
+  /* Transitions */
+  --transition: 0.2s ease;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Utility ───────────────────────────────────────────────── */
+button {
+  cursor: pointer;
+  font-family: var(--font-family);
+  border: none;
+  outline: none;
+}
+
+input {
+  font-family: var(--font-family);
+  outline: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
