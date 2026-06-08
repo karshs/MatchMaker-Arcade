@@ -4,6 +4,21 @@ import { useAuth } from '../context/AuthContext'
 import { customersApi } from '../api'
 import './DashboardPage.css'
 
+const DefaultAvatar = ({ className, style = {} }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ background: '#EAE7E2', borderRadius: '50%', display: 'block', ...style }}
+  >
+    <path
+      d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
+      fill="#B1ABA2"
+    />
+  </svg>
+)
+
 /* ── Status chip config ────────────────────────────────────── */
 const STATUS_CLASS = {
   'Searching':         'searching',
@@ -300,13 +315,7 @@ export default function DashboardPage() {
                       >
                         <td>
                           <div className="db-client-cell">
-                            {c.photo_url ? (
-                              <img className="db-avatar" src={c.photo_url} alt={c.first_name} />
-                            ) : (
-                              <div className="db-avatar db-avatar-initials">
-                                {initials(c.first_name, c.last_name)}
-                              </div>
-                            )}
+                            <DefaultAvatar className="db-avatar" />
                             <div>
                               <div className="db-client-name">
                                 {c.first_name} {c.last_name}

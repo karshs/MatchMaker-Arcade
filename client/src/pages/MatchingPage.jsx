@@ -4,6 +4,21 @@ import { useAuth } from '../context/AuthContext'
 import { matchesApi } from '../api'
 import './MatchingPage.css'
 
+const DefaultAvatar = ({ className, style = {} }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ background: '#EAE7E2', borderRadius: '50%', display: 'block', ...style }}
+  >
+    <path
+      d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
+      fill="#B1ABA2"
+    />
+  </svg>
+)
+
 /* ── Tier helpers ──────────────────────────────────────────── */
 function getTier(score) {
   if (score >= 90) return 'excellent'
@@ -73,13 +88,7 @@ function MatchCard({ candidate, customerId }) {
     <div className={`mp-card ${tier}`}>
       <div className="mp-card-main">
         <div className="mp-card-photo-wrap">
-          {candidate.photo_url ? (
-            <img className="mp-card-photo" src={candidate.photo_url} alt={candidate.first_name} />
-          ) : (
-            <div className="mp-card-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:800,color:'#C8920A' }}>
-              {`${candidate.first_name?.[0]??''}${candidate.last_name?.[0]??''}`.toUpperCase()}
-            </div>
-          )}
+          <DefaultAvatar className="mp-card-photo" style={{ borderRadius: '8px' }} />
         </div>
 
         <div className="mp-card-info">
@@ -255,13 +264,7 @@ export default function MatchingPage() {
           {/* Hero */}
           <section className="mp-hero">
             <div className="mp-hero-photo-wrap">
-              {customerPhoto ? (
-                <img className="mp-hero-photo" src={customerPhoto} alt={customerName} />
-              ) : (
-                <div className="mp-hero-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:800,color:'#C8920A' }}>
-                  {customerName.split(' ').map(w=>w[0]).join('').slice(0,2)}
-                </div>
-              )}
+              <DefaultAvatar className="mp-hero-photo" />
             </div>
             <div className="mp-hero-info">
               <div className="mp-hero-eyebrow">✦ Active Discovery</div>

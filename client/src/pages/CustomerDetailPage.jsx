@@ -4,6 +4,21 @@ import { useAuth } from '../context/AuthContext'
 import { customersApi, notesApi } from '../api'
 import './CustomerDetailPage.css'
 
+const DefaultAvatar = ({ className, style = {} }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ background: '#EAE7E2', borderRadius: '50%', display: 'block', ...style }}
+  >
+    <path
+      d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
+      fill="#B1ABA2"
+    />
+  </svg>
+)
+
 const TABS = ['Personal Details', 'Lifestyle & Plans', 'Partner Preferences', 'Family Background']
 
 const JOURNEY_STATUSES = [
@@ -222,13 +237,7 @@ export default function CustomerDetailPage() {
           {/* Hero */}
           <section className="cd-hero">
             <div className="cd-hero-photo-wrap">
-              {customer.photo_url ? (
-                <img className="cd-hero-photo" src={customer.photo_url} alt={fullName} />
-              ) : (
-                <div className="cd-hero-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,fontWeight:800,color:'#C8920A' }}>
-                  {initials}
-                </div>
-              )}
+              <DefaultAvatar className="cd-hero-photo" />
               <div className="cd-verified-badge">
                 <span className="ms" style={{ fontVariationSettings:"'FILL' 1" }}>verified</span>
               </div>
@@ -411,13 +420,7 @@ export default function CustomerDetailPage() {
                   <div style={{ fontSize: 13, color: '#777', padding: '8px 0' }}>No matches sent yet.</div>
                 ) : sentMatch.map(m => (
                   <div key={m.id} className="cd-match-card">
-                    {m.photo_url ? (
-                      <img className="cd-match-photo" src={m.photo_url} alt={m.first_name} />
-                    ) : (
-                      <div className="cd-match-photo" style={{ background:'#F5F3F0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:700,color:'#C8920A',borderRadius:6,flexShrink:0,width:60,height:60 }}>
-                        {`${m.first_name?.[0]??''}${m.last_name?.[0]??''}`.toUpperCase()}
-                      </div>
-                    )}
+                    <DefaultAvatar className="cd-match-photo" style={{ borderRadius: '6px' }} />
                     <div className="cd-match-info">
                       <div className="cd-match-top">
                         <div>
