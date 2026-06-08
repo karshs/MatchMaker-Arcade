@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { customersApi, notesApi } from '../api'
@@ -6,16 +6,28 @@ import './CustomerDetailPage.css'
 
 const TABS = ['Personal Details', 'Lifestyle & Plans', 'Partner Preferences', 'Family Background']
 
+const JOURNEY_STATUSES = [
+  'Profile Verified',
+  'Searching',
+  'Matches Shared',
+  'Interested',
+  'Call Scheduled',
+  'Meeting Scheduled',
+  'Successful Match',
+  'Paused',
+  'Inactive',
+]
+
 const STATUS_MAP = {
-  'Searching':         { cls: 'searching',  dot: '#C8920A' },
-  'Profile Verified':  { cls: 'searching',  dot: '#C8920A' },
-  'Matches Shared':    { cls: 'review',     dot: '#E65100' },
-  'Interested':        { cls: 'interested', dot: '#1565C0' },
-  'Call Scheduled':    { cls: 'call',       dot: '#2E7D32' },
-  'Meeting Scheduled': { cls: 'call',       dot: '#2E7D32' },
-  'Successful Match':  { cls: 'match',      dot: '#6A1B9A' },
-  'Paused':            { cls: 'paused',     dot: '#757575' },
-  'Inactive':          { cls: 'closed',     dot: '#C62828' },
+  'Searching':         { cls: 'searching',  dot: '#C8920A', bg: '#FFF3CC', border: '#D4A012' },
+  'Profile Verified':  { cls: 'searching',  dot: '#C8920A', bg: '#FFF3CC', border: '#D4A012' },
+  'Matches Shared':    { cls: 'review',     dot: '#E65100', bg: '#FFF8E1', border: '#FFB74D' },
+  'Interested':        { cls: 'interested', dot: '#1565C0', bg: '#E8F4FD', border: '#64B5F6' },
+  'Call Scheduled':    { cls: 'call',       dot: '#2E7D32', bg: '#EDF7ED', border: '#66BB6A' },
+  'Meeting Scheduled': { cls: 'call',       dot: '#2E7D32', bg: '#EDF7ED', border: '#66BB6A' },
+  'Successful Match':  { cls: 'match',      dot: '#6A1B9A', bg: '#F3E5F5', border: '#AB47BC' },
+  'Paused':            { cls: 'paused',     dot: '#757575', bg: '#EEEEEE', border: '#BDBDBD' },
+  'Inactive':          { cls: 'closed',     dot: '#C62828', bg: '#FFEBEE', border: '#EF9A9A' },
 }
 
 function fmtDate(d) {
@@ -56,6 +68,22 @@ export default function CustomerDetailPage() {
   const [noteText,  setNoteText]  = useState('')
   const [saving,    setSaving]    = useState(false)
 
+  /* ── Status dropdown state ── */
+  const [statusOpen,    setStatusOpen]    = useState(false)
+  const [statusSaving,  setStatusSaving]  = useState(false)
+  const statusRef = useRef(null)
+
+  /* Close dropdown on outside click */
+  useEffect(() => {
+    function handleClick(e) {
+      if (statusRef.current && !statusRef.current.contains(e.target)) {
+        setStatusOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   /* ── Fetch all data in parallel ── */
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -93,6 +121,30 @@ export default function CustomerDetailPage() {
       alert(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  /* ── Update journey status ── */
+  async function handleStatusChange(newStatus) {
+    if (!customer || newStatus === customer.journey_status) {
+      setStatusOpen(false)
+      return
+    }
+    setStatusOpen(false)
+    setStatusSaving(true)
+    // Optimistic update
+    setCustomer(c => ({ ...c, journey_status: newStatus }))
+    try {
+      await customersApi.updateJourney(id, newStatus)
+      // Refresh timeline to show the new event
+      const tlRes = await customersApi.journeyEvents(id)
+      setTimeline(tlRes.data.reverse())
+    } catch (err) {
+      // Revert on failure
+      setCustomer(c => ({ ...c, journey_status: customer.journey_status }))
+      alert('Failed to update status: ' + err.message)
+    } finally {
+      setStatusSaving(false)
     }
   }
 
@@ -191,10 +243,51 @@ export default function CustomerDetailPage() {
                     {customer.age} • {customer.city}{customer.state ? `, ${customer.state}` : ''} • {customer.occupation}
                   </div>
                 </div>
-                <div className="cd-status-pill" id="cd-status-pill">
-                  <span className="cd-status-dot" style={{ background: statusCfg.dot }} />
-                  {customer.journey_status?.toUpperCase()}
-                  <span className="ms">expand_more</span>
+                {/* Status pill with dropdown */}
+                <div className="cd-status-wrap" ref={statusRef}>
+                  <button
+                    className={`cd-status-pill ${statusCfg.cls} ${statusSaving ? 'saving' : ''}`}
+                    id="cd-status-pill"
+                    onClick={() => !statusSaving && setStatusOpen(p => !p)}
+                    disabled={statusSaving}
+                    title="Change client journey status"
+                  >
+                    {statusSaving ? (
+                      <span className="ms cd-status-spin">sync</span>
+                    ) : (
+                      <span className="cd-status-dot" style={{ background: statusCfg.dot }} />
+                    )}
+                    {customer.journey_status?.toUpperCase()}
+                    <span className="ms cd-status-chevron">
+                      {statusOpen ? 'expand_less' : 'expand_more'}
+                    </span>
+                  </button>
+
+                  {statusOpen && (
+                    <div className="cd-status-dropdown" id="cd-status-dropdown">
+                      <div className="cd-status-dropdown-header">Change Status</div>
+                      {JOURNEY_STATUSES.map(s => {
+                        const cfg = STATUS_MAP[s]
+                        const isActive = s === customer.journey_status
+                        return (
+                          <button
+                            key={s}
+                            className={`cd-status-option ${isActive ? 'active' : ''}`}
+                            id={`cd-status-opt-${s.toLowerCase().replace(/\s+/g, '-')}`}
+                            onClick={() => handleStatusChange(s)}
+                            style={isActive ? { background: cfg.bg, borderColor: cfg.border } : {}}
+                          >
+                            <span
+                              className="cd-status-option-dot"
+                              style={{ background: cfg.dot }}
+                            />
+                            {s}
+                            {isActive && <span className="ms cd-status-check">check</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 

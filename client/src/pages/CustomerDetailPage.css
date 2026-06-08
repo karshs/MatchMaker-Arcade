@@ -299,34 +299,56 @@
 
 .cd-client-sub .ms { font-size: 15px; color: var(--cd-accent); }
 
-/* Status pill with dropdown hint */
+/* Status pill wrapper — needed for dropdown positioning */
+.cd-status-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Status pill — now a real button */
 .cd-status-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px 5px 10px;
+  padding: 5px 10px 5px 10px;
   border-radius: 999px;
   background: var(--cd-accent-bg);
-  border: 1px solid rgba(200,146,10,0.3);
+  border: 1.5px solid rgba(200,146,10,0.4);
   color: var(--cd-accent-text);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
   font-family: 'Geist Mono', monospace;
+  transition: background 0.14s, border-color 0.14s, box-shadow 0.14s;
 }
 
-.cd-status-pill:hover { background: #FFEAA0; }
+.cd-status-pill:hover:not(:disabled) {
+  box-shadow: 0 0 0 3px rgba(200,146,10,0.15);
+}
 
+.cd-status-pill:disabled { cursor: not-allowed; opacity: 0.7; }
+
+/* Colour variants matching each journey status */
+.cd-status-pill.review     { background: #FFF8E1; border-color: rgba(230,81,0,.4); color: #7B3F00; }
+.cd-status-pill.interested { background: #E8F4FD; border-color: rgba(21,101,192,.4); color: #0D47A1; }
+.cd-status-pill.call       { background: #EDF7ED; border-color: rgba(46,125,50,.4); color: #1B5E20; }
+.cd-status-pill.match      { background: #F3E5F5; border-color: rgba(106,27,154,.4); color: #4A148C; }
+.cd-status-pill.paused     { background: #EEEEEE; border-color: rgba(117,117,117,.4); color: #424242; }
+.cd-status-pill.closed     { background: #FFEBEE; border-color: rgba(198,40,40,.4); color: #B71C1C; }
+
+/* Chevron icon inside pill */
+.cd-status-chevron { font-size: 15px; margin-left: 1px; }
+
+/* Pulsing dot */
 .cd-status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--cd-accent);
   animation: pulse-dot 2s infinite;
+  flex-shrink: 0;
 }
 
 @keyframes pulse-dot {
@@ -334,7 +356,88 @@
   50%      { opacity: 0.4; }
 }
 
-.cd-status-pill .ms { font-size: 14px; }
+/* Saving spinner */
+@keyframes cd-spin { to { transform: rotate(360deg); } }
+.cd-status-spin {
+  display: inline-block;
+  animation: cd-spin 0.7s linear infinite;
+  font-size: 14px;
+}
+
+/* ── Status Dropdown ──────────────────────────────────────────── */
+.cd-status-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid var(--cd-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  z-index: 100;
+  overflow: hidden;
+  animation: cd-dropdown-in 0.12s ease;
+}
+
+@keyframes cd-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cd-status-dropdown-header {
+  padding: 8px 14px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cd-muted);
+  font-family: 'Geist Mono', monospace;
+  border-bottom: 1px solid var(--cd-border);
+  background: var(--cd-sidebar-bg);
+}
+
+/* Each status option button */
+.cd-status-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cd-text-2);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--cd-border);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  font-family: 'Geist', 'Inter', sans-serif;
+}
+
+.cd-status-option:last-child  { border-bottom: none; }
+.cd-status-option:hover:not(.active) { background: var(--cd-sidebar-bg); }
+
+/* Active / selected option */
+.cd-status-option.active {
+  font-weight: 700;
+  color: var(--cd-text);
+  border: 1px solid transparent; /* overridden by inline style */
+}
+
+.cd-status-option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cd-status-check {
+  margin-left: auto;
+  font-size: 15px;
+  color: var(--cd-accent);
+}
+
 
 /* Hero meta row */
 .cd-hero-meta {
