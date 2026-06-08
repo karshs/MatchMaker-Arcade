@@ -67,7 +67,14 @@
   flex-shrink: 0;
 }
 
-.mp-brand-name { font-size: 14px; font-weight: 800; color: var(--mp-text); padding: 0 6px; letter-spacing: -0.2px; }
+.mp-brand-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--mp-text);
+  padding: 0 6px;
+  letter-spacing: -0.2px;
+}
 .mp-brand-sub  { font-size: 11px; color: var(--mp-muted); padding: 0 6px; margin-bottom: 14px; }
 
 .mp-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }

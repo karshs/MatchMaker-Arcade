@@ -23,33 +23,41 @@
   --db-accent-text:  #7A5C00;
 
   /* status chips */
+  --chip-verified-bg:     #FFFDF2;
+  --chip-verified-text:   #B58000;
+  --chip-verified-border: rgba(200, 146, 10, 0.25);
+
   --chip-searching-bg:    #FFF3CC;
   --chip-searching-text:  #7A5C00;
-  --chip-searching-border:#D4A012;
+  --chip-searching-border: rgba(200, 146, 10, 0.45);
 
   --chip-interested-bg:    #E8F4FD;
-  --chip-interested-text:  #1565C0;
-  --chip-interested-border:#64B5F6;
+  --chip-interested-text:  #0D47A1;
+  --chip-interested-border: rgba(21, 101, 192, 0.4);
 
   --chip-call-bg:    #EDF7ED;
   --chip-call-text:  #1B5E20;
-  --chip-call-border:#66BB6A;
+  --chip-call-border: rgba(46, 125, 50, 0.4);
+
+  --chip-meeting-bg:     #E0F7FA;
+  --chip-meeting-text:   #006064;
+  --chip-meeting-border: rgba(0, 151, 167, 0.4);
 
   --chip-review-bg:    #FFF8E1;
-  --chip-review-text:  #E65100;
-  --chip-review-border:#FFB74D;
+  --chip-review-text:  #7B3F00;
+  --chip-review-border: rgba(230, 81, 0, 0.4);
 
   --chip-match-bg:    #F3E5F5;
   --chip-match-text:  #4A148C;
-  --chip-match-border:#AB47BC;
+  --chip-match-border: rgba(106, 27, 154, 0.4);
 
   --chip-paused-bg:    #EEEEEE;
-  --chip-paused-text:  #555555;
-  --chip-paused-border:#BDBDBD;
+  --chip-paused-text:  #424242;
+  --chip-paused-border: rgba(117, 117, 117, 0.4);
 
   --chip-closed-bg:    #FFEBEE;
   --chip-closed-text:  #B71C1C;
-  --chip-closed-border:#EF9A9A;
+  --chip-closed-border: rgba(198, 40, 40, 0.4);
 
   font-family: 'Geist', 'Inter', sans-serif;
 }
@@ -82,7 +90,8 @@
 }
 
 .db-brand-name {
-  font-size: 15px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.3px;
   color: var(--db-text);
@@ -784,6 +793,9 @@
 .db-status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
 /* Chip variants */
+.db-status-chip.verified    { background: var(--chip-verified-bg);   color: var(--chip-verified-text);   border-color: var(--chip-verified-border); }
+.db-status-chip.verified    .db-status-dot { background: var(--chip-verified-text); }
+
 .db-status-chip.searching   { background: var(--chip-searching-bg);  color: var(--chip-searching-text);  border-color: var(--chip-searching-border); }
 .db-status-chip.searching   .db-status-dot { background: var(--chip-searching-text); }
 
@@ -795,6 +807,9 @@
 
 .db-status-chip.call        { background: var(--chip-call-bg);       color: var(--chip-call-text);       border-color: var(--chip-call-border); }
 .db-status-chip.call        .db-status-dot { background: var(--chip-call-text); }
+
+.db-status-chip.meeting     { background: var(--chip-meeting-bg);    color: var(--chip-meeting-text);    border-color: var(--chip-meeting-border); }
+.db-status-chip.meeting     .db-status-dot { background: var(--chip-meeting-text); }
 
 .db-status-chip.match       { background: var(--chip-match-bg);      color: var(--chip-match-text);      border-color: var(--chip-match-border); }
 .db-status-chip.match       .db-status-dot { background: var(--chip-match-text); }

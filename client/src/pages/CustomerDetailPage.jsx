@@ -19,15 +19,15 @@ const JOURNEY_STATUSES = [
 ]
 
 const STATUS_MAP = {
-  'Searching':         { cls: 'searching',  dot: '#C8920A', bg: '#FFF3CC', border: '#D4A012' },
-  'Profile Verified':  { cls: 'searching',  dot: '#C8920A', bg: '#FFF3CC', border: '#D4A012' },
-  'Matches Shared':    { cls: 'review',     dot: '#E65100', bg: '#FFF8E1', border: '#FFB74D' },
-  'Interested':        { cls: 'interested', dot: '#1565C0', bg: '#E8F4FD', border: '#64B5F6' },
-  'Call Scheduled':    { cls: 'call',       dot: '#2E7D32', bg: '#EDF7ED', border: '#66BB6A' },
-  'Meeting Scheduled': { cls: 'call',       dot: '#2E7D32', bg: '#EDF7ED', border: '#66BB6A' },
-  'Successful Match':  { cls: 'match',      dot: '#6A1B9A', bg: '#F3E5F5', border: '#AB47BC' },
-  'Paused':            { cls: 'paused',     dot: '#757575', bg: '#EEEEEE', border: '#BDBDBD' },
-  'Inactive':          { cls: 'closed',     dot: '#C62828', bg: '#FFEBEE', border: '#EF9A9A' },
+  'Searching':         { cls: 'searching',  dot: '#7A5C00', bg: '#FFF3CC', border: 'rgba(200, 146, 10, 0.45)' },
+  'Profile Verified':  { cls: 'verified',   dot: '#B58000', bg: '#FFFDF2', border: 'rgba(200, 146, 10, 0.25)' },
+  'Matches Shared':    { cls: 'review',     dot: '#E65100', bg: '#FFF8E1', border: 'rgba(230, 81, 0, 0.4)' },
+  'Interested':        { cls: 'interested', dot: '#1565C0', bg: '#E8F4FD', border: 'rgba(21, 101, 192, 0.4)' },
+  'Call Scheduled':    { cls: 'call',       dot: '#2E7D32', bg: '#EDF7ED', border: 'rgba(46, 125, 50, 0.4)' },
+  'Meeting Scheduled': { cls: 'meeting',    dot: '#006064', bg: '#E0F7FA', border: 'rgba(0, 151, 167, 0.4)' },
+  'Successful Match':  { cls: 'match',      dot: '#6A1B9A', bg: '#F3E5F5', border: 'rgba(106, 27, 154, 0.4)' },
+  'Paused':            { cls: 'paused',     dot: '#757575', bg: '#EEEEEE', border: 'rgba(117, 117, 117, 0.4)' },
+  'Inactive':          { cls: 'closed',     dot: '#C62828', bg: '#FFEBEE', border: 'rgba(198, 40, 40, 0.4)' },
 }
 
 function fmtDate(d) {

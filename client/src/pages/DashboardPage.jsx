@@ -7,11 +7,11 @@ import './DashboardPage.css'
 /* ── Status chip config ────────────────────────────────────── */
 const STATUS_CLASS = {
   'Searching':         'searching',
-  'Profile Verified':  'searching',
+  'Profile Verified':  'verified',
   'Matches Shared':    'review',
   'Interested':        'interested',
   'Call Scheduled':    'call',
-  'Meeting Scheduled': 'call',
+  'Meeting Scheduled': 'meeting',
   'Successful Match':  'match',
   'Paused':            'paused',
   'Inactive':          'closed',

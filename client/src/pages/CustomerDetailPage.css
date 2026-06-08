@@ -53,7 +53,8 @@
 }
 
 .cd-brand-name {
-  font-size: 14px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 16px;
   font-weight: 800;
   color: var(--cd-text);
   letter-spacing: -0.2px;
@@ -153,7 +154,8 @@
 }
 
 .cd-topbar-logo {
-  font-size: 15px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 17px;
   font-weight: 800;
   color: var(--cd-text);
   letter-spacing: -0.3px;
@@ -303,6 +305,7 @@
 .cd-status-wrap {
   position: relative;
   flex-shrink: 0;
+  display: inline-flex;
 }
 
 /* Status pill — now a real button */
@@ -332,12 +335,15 @@
 .cd-status-pill:disabled { cursor: not-allowed; opacity: 0.7; }
 
 /* Colour variants matching each journey status */
-.cd-status-pill.review     { background: #FFF8E1; border-color: rgba(230,81,0,.4); color: #7B3F00; }
-.cd-status-pill.interested { background: #E8F4FD; border-color: rgba(21,101,192,.4); color: #0D47A1; }
-.cd-status-pill.call       { background: #EDF7ED; border-color: rgba(46,125,50,.4); color: #1B5E20; }
-.cd-status-pill.match      { background: #F3E5F5; border-color: rgba(106,27,154,.4); color: #4A148C; }
-.cd-status-pill.paused     { background: #EEEEEE; border-color: rgba(117,117,117,.4); color: #424242; }
-.cd-status-pill.closed     { background: #FFEBEE; border-color: rgba(198,40,40,.4); color: #B71C1C; }
+.cd-status-pill.verified   { background: #FFFDF2; border-color: rgba(200, 146, 10, 0.25); color: #B58000; }
+.cd-status-pill.searching  { background: #FFF3CC; border-color: rgba(200, 146, 10, 0.45); color: #7A5C00; }
+.cd-status-pill.review     { background: #FFF8E1; border-color: rgba(230, 81, 0, 0.4); color: #7B3F00; }
+.cd-status-pill.interested { background: #E8F4FD; border-color: rgba(21, 101, 192, 0.4); color: #0D47A1; }
+.cd-status-pill.call       { background: #EDF7ED; border-color: rgba(46, 125, 50, 0.4); color: #1B5E20; }
+.cd-status-pill.meeting    { background: #E0F7FA; border-color: rgba(0, 151, 167, 0.4); color: #006064; }
+.cd-status-pill.match      { background: #F3E5F5; border-color: rgba(106, 27, 154, 0.4); color: #4A148C; }
+.cd-status-pill.paused     { background: #EEEEEE; border-color: rgba(117, 117, 117, 0.4); color: #424242; }
+.cd-status-pill.closed     { background: #FFEBEE; border-color: rgba(198, 40, 40, 0.4); color: #B71C1C; }
 
 /* Chevron icon inside pill */
 .cd-status-chevron { font-size: 15px; margin-left: 1px; }

@@ -57,7 +57,8 @@
 
 /* ── Title ─────────────────────────────────────────────────── */
 .login-title {
-  font-size: 28px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 32px;
   font-weight: 800;
   color: var(--color-primary);
   letter-spacing: -0.5px;
