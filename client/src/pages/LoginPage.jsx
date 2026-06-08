@@ -83,11 +83,13 @@ export default function LoginPage({ onLogin }) {
 
         {/* Logo */}
         <div className="login-logo-wrap" aria-hidden="true">
-          <HeartIcon />
+          <img src="/tdc_logo.png" alt="TDC Logo" className="login-tdc-logo-main" />
         </div>
 
-        {/* Title */}
-        <h1 className="login-title">The Date Crew</h1>
+        {/* Title Area */}
+        <div className="login-title-wrap">
+          <h1 className="login-title">The Date Crew</h1>
+        </div>
         <p className="login-subtitle">Matchmaker Portal Login</p>
 
         {/* Error */}
