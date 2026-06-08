@@ -69,6 +69,15 @@ export default function LoginPage({ onLogin }) {
     setLoading(true)
     try {
       await onLogin(email.trim(), password)
+      
+      // Play premium notification sound on success
+      try {
+        const audio = new Audio('/notification.wav')
+        audio.play()
+      } catch (audioErr) {
+        // Silently ignore if browser blocks auto-play
+      }
+      
       // Navigation handled by App.jsx after onLogin resolves
     } catch (err) {
       setError(err.message || 'Invalid credentials. Please try again.')

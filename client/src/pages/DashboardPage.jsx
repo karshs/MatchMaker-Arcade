@@ -39,8 +39,6 @@ function initials(first, last) {
 const NAV = [
   { icon: 'dashboard', label: 'Dashboard',     path: '/'          },
   { icon: 'group',     label: 'Customers',     path: '/customers' },
-  { icon: 'search',    label: 'Global Search', path: '/'          },
-  { icon: 'event',     label: 'Calendar',      path: '/'          },
 ]
 
 const JOURNEY_FILTERS = [
