@@ -178,7 +178,8 @@ function generateProfile(index) {
     ? MALE_NAMES[index % MALE_NAMES.length]
     : FEMALE_NAMES[(index - 50) % FEMALE_NAMES.length];
 
-  const religion = pick(RELIGION_DIST, s + 1);
+  // Ensure first 5 profiles use the majority religion (Hindu) to maximize pool
+  const religion = index < 5 ? 'Hindu' : pick(RELIGION_DIST, s + 1);
   const rd = RELIGION_DATA[religion];
   const lastName = pick(rd.lastNames, s + 2);
   const caste = pick(rd.castes, s + 3);
@@ -191,7 +192,8 @@ function generateProfile(index) {
 
   const ageMin = isMale ? 24 : 22;
   const ageMax = isMale ? 42 : 38;
-  const age = randInt(ageMin, ageMax, s + 10);
+  // Ensure first 5 demo profiles are older so they aren't auto-rejected
+  const age = index < 5 ? randInt(30, 34, s + 10) : randInt(ageMin, ageMax, s + 10);
   const yr = 2026 - age;
   const mo = String(randInt(1, 12, s + 11)).padStart(2, '0');
   const dy = String(randInt(1, 28, s + 12)).padStart(2, '0');
@@ -214,10 +216,10 @@ function generateProfile(index) {
 
   // Preferred age range — females tend to prefer older, males prefer younger
   const prefAgeMin = Math.max(18, isMale ? age - 6 : age);
-  const prefAgeMax = Math.min(50, isMale ? age + 1 : age + 10);
+  const prefAgeMax = index < 5 ? 50 : Math.min(50, isMale ? age + 1 : age + 10);
 
-  // ~60% prefer same religion, ~40% open to all
-  const prefReligion = sr(s + 21) > 0.4 ? [religion] : [];
+  // Make first 5 profiles completely open to all religions
+  const prefReligion = index < 5 ? [] : (sr(s + 21) > 0.4 ? [religion] : []);
   const prefIncomeMin = isMale ? null : Math.max(4, income - 8);
   const prefIncomeMax = isMale ? null : income + 20;
 

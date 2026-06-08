@@ -40,15 +40,15 @@ const NAV = [
 ]
 
 /* ── Match card ────────────────────────────────────────────── */
-function MatchCard({ candidate, customerId }) {
+function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
   const tier      = getTier(candidate.compatibility_score)
   const tierLabel = getTierLabel(candidate.compatibility_score)
 
   const [showBreakdown, setShowBreakdown] = useState(false)
-  const [showAI,        setShowAI]        = useState(false)
-  const [sent,          setSent]          = useState(false)
-  const [sending,       setSending]       = useState(false)
-  const [barWidth,      setBarWidth]      = useState(0)
+  const [showAI,           setShowAI]           = useState(false)
+  const [sent,             setSent]             = useState(false)
+  const [sending,          setSending]          = useState(false)
+  const [barWidth,         setBarWidth]         = useState(0)
 
   useEffect(() => {
     const t = setTimeout(() => setBarWidth(candidate.compatibility_score), 150)
@@ -61,6 +61,7 @@ function MatchCard({ candidate, customerId }) {
     try {
       await matchesApi.sendMatch(customerId, candidate.id, candidate.compatibility_score)
       setSent(true)
+      if (onSendSuccess) onSendSuccess(candidate)
     } catch (err) {
       alert(err.message || 'Failed to send match.')
     } finally {
@@ -192,6 +193,14 @@ export default function MatchingPage() {
   const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState('')
   const [search,        setSearch]        = useState('')
+  const [toastMsg,      setToastMsg]      = useState('')
+  const [sentCandidate, setSentCandidate] = useState(null)
+
+  const handleSendSuccess = useCallback((candidate) => {
+    setSentCandidate(candidate)
+    setToastMsg('Match recommendation sent successfully.')
+    setTimeout(() => setToastMsg(''), 3000)
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -291,6 +300,14 @@ export default function MatchingPage() {
             <div style={{ padding:'12px 28px', color:'#C62828', fontSize: 13 }}>{error}</div>
           )}
 
+          {/* Toast */}
+          {toastMsg && (
+            <div className="mp-toast">
+              <span className="ms" style={{ marginRight: 8, fontSize: 18 }}>check_circle</span>
+              {toastMsg}
+            </div>
+          )}
+
           {/* Grid */}
           <div className="mp-grid-wrap">
             {loading ? (
@@ -300,7 +317,13 @@ export default function MatchingPage() {
             ) : (
               <div className="mp-grid">
                 {visible.map(c => (
-                  <MatchCard key={c.id} candidate={c} customerId={id} />
+                  <MatchCard 
+                    key={c.id} 
+                    candidate={c} 
+                    customerId={id} 
+                    customerName={customerName}
+                    onSendSuccess={handleSendSuccess}
+                  />
                 ))}
                 {visible.length === 0 && (
                   <div style={{ gridColumn:'1/-1',padding:24,color:'#777',fontSize:13 }}>
@@ -323,6 +346,39 @@ export default function MatchingPage() {
 
         </div>
       </main>
+
+      {/* Page-level Success Modal */}
+      {sentCandidate && (
+        <div className="mp-modal-overlay">
+          <div className="mp-modal">
+            <button className="mp-modal-close" onClick={() => setSentCandidate(null)}>
+              <span className="ms">close</span>
+            </button>
+            <div className="mp-modal-header">
+              <span className="ms" style={{ color: '#4CAF50', fontSize: 32, marginBottom: 8 }}>check_circle</span>
+              <h2 style={{ margin: 0, fontSize: 20 }}>Match Sent!</h2>
+            </div>
+            
+            <div className="mp-modal-body">
+              <p style={{ marginTop: 0, fontSize: 14 }}>You successfully recommended <strong>{sentCandidate.first_name} {sentCandidate.last_name}</strong> to <strong>{customerName || 'your client'}</strong>.</p>
+              
+              <div className="mp-mock-email">
+                <div className="mp-mock-email-header">
+                  <strong>Subject:</strong> We found a great match for you!
+                </div>
+                <div className="mp-mock-email-body">
+                  Hi {customerName?.split(' ')[0] || 'there'},<br/><br/>
+                  We've identified a highly compatible match for you.<br/>
+                  Meet <strong>{sentCandidate.first_name}</strong>, a {sentCandidate.age}-year-old {sentCandidate.occupation || 'professional'} from {sentCandidate.city}.<br/><br/>
+                  Based on our matchmaking algorithm, you have a <strong>{Math.round(sentCandidate.compatibility_score)}% compatibility score!</strong><br/><br/>
+                  Let us know if you'd like to proceed with a meeting.<br/><br/>
+                  Best,<br/>The Date Crew
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
