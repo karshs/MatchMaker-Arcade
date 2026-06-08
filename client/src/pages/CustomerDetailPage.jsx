@@ -80,6 +80,7 @@ export default function CustomerDetailPage() {
   const [error,     setError]     = useState('')
 
   const [activeTab, setActiveTab] = useState(0)
+  const [noteType,  setNoteType]  = useState('General Note')
   const [noteText,  setNoteText]  = useState('')
   const [saving,    setSaving]    = useState(false)
 
@@ -129,9 +130,10 @@ export default function CustomerDetailPage() {
     if (!noteText.trim()) return
     setSaving(true)
     try {
-      const res = await notesApi.add(id, 'General Note', noteText.trim())
+      const res = await notesApi.add(id, noteType, noteText.trim())
       setNotes(n => [res.data, ...n])
       setNoteText('')
+      setNoteType('General Note')
     } catch (err) {
       alert(err.message)
     } finally {
@@ -323,7 +325,7 @@ export default function CustomerDetailPage() {
                   </div>
                 </div>
                 <div className="cd-meta-item">
-                  <span className="ms">support_agent</span>
+                  <span className="ms">favorite_border</span>
                   <div>
                     <div className="cd-meta-label">Marital Status</div>
                     <div className="cd-meta-value underline">{customer.marital_status || '—'}</div>
@@ -410,20 +412,33 @@ export default function CustomerDetailPage() {
                     <div className="cd-card-body">
                       <div className="cd-card-cols">
                         <div>
-                          <div className="cd-section-label">Habits</div>
+                          <div className="cd-section-label">Languages Known</div>
+                          <div className="cd-habits-list">
+                            {customer.languages && customer.languages.length > 0 ? customer.languages.map(lang => (
+                              <span key={lang} className="cd-habit-chip"><span className="ms">language</span>{lang}</span>
+                            )) : <span className="cd-kv-val">—</span>}
+                          </div>
+                          <div className="cd-section-label" style={{ marginTop: 12 }}>Habits</div>
                           <div className="cd-habits-list">
                             {customer.diet && <span className="cd-habit-chip"><span className="ms">restaurant</span>{customer.diet}</span>}
                             {customer.smoking === 'Never' && <span className="cd-habit-chip"><span className="ms">smoke_free</span>Non-Smoker</span>}
                             {customer.smoking && customer.smoking !== 'Never' && <span className="cd-habit-chip"><span className="ms">smoking_rooms</span>{customer.smoking}</span>}
                             {customer.drinking && <span className="cd-habit-chip"><span className="ms">liquor</span>{customer.drinking}</span>}
                             {customer.physical_activity && <span className="cd-habit-chip"><span className="ms">fitness_center</span>{customer.physical_activity}</span>}
-                            {customer.languages && customer.languages.length > 0 && customer.languages.map(lang => (
-                              <span key={lang} className="cd-habit-chip"><span className="ms">language</span>{lang}</span>
-                            ))}
                           </div>
-                          {customer.marriage_timeline && <>
+                          {(customer.marriage_timeline || customer.want_kids || customer.open_to_relocate !== undefined) && <>
                             <div className="cd-section-label" style={{ marginTop: 12 }}>Future Plans</div>
-                            <p className="cd-future-plans">Marriage timeline: {customer.marriage_timeline}. {customer.want_kids && customer.want_kids !== 'No' ? `Wants kids: ${customer.want_kids}.` : 'Does not want kids.'} {customer.open_to_relocate ? 'Open to relocate.' : ''}</p>
+                            <div className="cd-kv-list">
+                              {customer.marriage_timeline && (
+                                <div className="cd-kv"><span className="cd-kv-key">Marriage Timeline</span><span className="cd-kv-val">{customer.marriage_timeline}</span></div>
+                              )}
+                              {customer.want_kids && (
+                                <div className="cd-kv"><span className="cd-kv-key">Wants Kids</span><span className="cd-kv-val">{customer.want_kids}</span></div>
+                              )}
+                              {customer.open_to_relocate !== undefined && (
+                                <div className="cd-kv"><span className="cd-kv-key">Relocation</span><span className="cd-kv-val">{customer.open_to_relocate ? 'Open to relocate' : 'Not open to relocate'}</span></div>
+                              )}
+                            </div>
                           </>}
                         </div>
                         <div>
@@ -578,7 +593,20 @@ export default function CustomerDetailPage() {
 
               {/* Notes */}
               <div className="cd-notes-card">
-                <div className="cd-notes-title">Consultant Notes</div>
+                <div className="cd-notes-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Consultant Notes
+                  <select
+                    className="cd-status-select"
+                    style={{ padding: '4px 8px', fontSize: 12, borderRadius: 4, border: '1px solid #ddd', height: 'auto', background: 'transparent' }}
+                    value={noteType}
+                    onChange={e => setNoteType(e.target.value)}
+                  >
+                    <option value="General Note">General Note</option>
+                    <option value="Call">Call</option>
+                    <option value="Meeting">Meeting</option>
+                    <option value="Follow Up">Follow Up</option>
+                  </select>
+                </div>
                 <textarea
                   id="cd-note-input"
                   className="cd-notes-textarea"
@@ -594,10 +622,10 @@ export default function CustomerDetailPage() {
                   {notes.map((n, i) => (
                     <div key={n.id || i} className={`cd-note-item ${i === 0 ? '' : 'secondary'}`}>
                       <div className="cd-note-head">
-                        <div className="cd-note-label">
-                          <span className="ms">{n.note_type === 'Call' ? 'call' : n.note_type === 'Meeting' ? 'groups' : 'note'}</span>
-                          {n.note_type}
-                          <span className="cd-note-date">• {fmtDate(n.created_at)}</span>
+                        <div className="cd-note-label" style={{ fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{n.note_type === 'Call' ? '📞' : n.note_type === 'Meeting' ? '🤝' : n.note_type === 'Follow Up' ? '🔄' : '📝'}</span>
+                          {n.note_type === 'General Note' ? 'Note' : n.note_type}
+                          <span className="cd-note-date" style={{ fontWeight: 500, opacity: 0.6 }}>• {fmtDate(n.created_at).toUpperCase()}</span>
                         </div>
                         <button className="cd-note-more-btn"><span className="ms">more_horiz</span></button>
                       </div>
