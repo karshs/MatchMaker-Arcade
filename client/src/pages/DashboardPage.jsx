@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { customersApi } from '../api'
+import { customersApi, notesApi } from '../api'
 import './DashboardPage.css'
 
 const DefaultAvatar = ({ className, style = {} }) => (
@@ -74,6 +74,26 @@ export default function DashboardPage() {
   const [statusFilter,   setStatusFilter]   = useState('')
   const [religionFilter, setReligionFilter] = useState('')
   const [cityFilter,     setCityFilter]     = useState('')
+
+  /* ── Quick Notes State ── */
+  const [quickNotesCustomer, setQuickNotesCustomer] = useState(null)
+  const [quickNotes,         setQuickNotes]         = useState([])
+  const [loadingNotes,       setLoadingNotes]       = useState(false)
+
+  const handleQuickNotes = useCallback(async (ev, customer) => {
+    ev.stopPropagation()
+    setQuickNotesCustomer(customer)
+    setLoadingNotes(true)
+    setQuickNotes([])
+    try {
+      const res = await notesApi.list(customer.id)
+      setQuickNotes(res.data.slice(0, 3)) // Take top 3
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingNotes(false)
+    }
+  }, [])
 
   /* ── Fetch paginated table rows ── */
   const fetchCustomers = useCallback(async () => {
@@ -336,14 +356,24 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td>
-                          <button
-                            className="db-view-btn"
-                            onClick={ev => { ev.stopPropagation(); navigate(`/customers/${c.id}`) }}
-                            id={`db-view-${c.id}`}
-                          >
-                            <span className="ms" style={{ fontSize: 15 }}>description</span>
-                            View
-                          </button>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              className="db-quick-notes-btn"
+                              onClick={ev => handleQuickNotes(ev, c)}
+                              id={`db-quick-notes-${c.id}`}
+                              title="Quick Notes"
+                            >
+                              <span className="ms" style={{ fontSize: 15 }}>speaker_notes</span>
+                            </button>
+                            <button
+                              className="db-view-btn"
+                              onClick={ev => { ev.stopPropagation(); navigate(`/customers/${c.id}`) }}
+                              id={`db-view-${c.id}`}
+                            >
+                              <span className="ms" style={{ fontSize: 15 }}>description</span>
+                              View
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -421,6 +451,57 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* ── Quick Notes Modal ── */}
+      {quickNotesCustomer && (
+        <div className="db-modal-overlay">
+          <div className="db-modal">
+            <button className="db-modal-close" onClick={() => setQuickNotesCustomer(null)}>
+              <span className="ms">close</span>
+            </button>
+            <div className="db-modal-header">
+              <span className="ms" style={{ color: '#C8920A', fontSize: 32, marginBottom: 8 }}>speaker_notes</span>
+              <h2 style={{ margin: 0, fontSize: 20 }}>Quick Notes</h2>
+              <p style={{ margin: '4px 0 0 0', fontSize: 14, color: '#777' }}>
+                {quickNotesCustomer.first_name} {quickNotesCustomer.last_name}
+              </p>
+            </div>
+            
+            <div className="db-modal-body">
+              {loadingNotes ? (
+                <div className="db-loading">
+                  <span className="ms db-loading-icon">sync</span> Loading notes…
+                </div>
+              ) : quickNotes.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#777', padding: '24px 0' }}>
+                  No notes found for this customer.
+                </div>
+              ) : (
+                <div className="db-quick-notes-list">
+                  {quickNotes.map(note => (
+                    <div key={note.id} className="db-quick-note">
+                      <div className="db-quick-note-head">
+                        <span className="db-quick-note-type">{note.note_type}</span>
+                        <span className="db-quick-note-date">{new Date(note.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="db-quick-note-content">{note.content}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="db-modal-footer">
+              <button 
+                className="db-modal-primary-btn" 
+                onClick={() => navigate(`/customers/${quickNotesCustomer.id}`)}
+              >
+                Open Full Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

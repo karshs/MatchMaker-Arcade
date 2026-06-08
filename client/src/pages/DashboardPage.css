@@ -931,3 +931,153 @@
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/* ── Quick Notes Feature ────────────────────────────────────── */
+.db-quick-notes-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--db-border);
+  border-radius: 5px;
+  background: var(--db-sidebar-bg);
+  color: var(--db-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.db-quick-notes-btn:hover {
+  background: var(--db-accent-bg);
+  border-color: var(--db-accent);
+  color: var(--db-accent-text);
+}
+
+.db-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.db-modal {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  overflow: hidden;
+  animation: dbModalAppear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dbModalAppear {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.db-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--db-text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.db-modal-close:hover {
+  background: #f0f0f0;
+  color: var(--db-text);
+}
+
+.db-modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--db-border);
+  text-align: center;
+}
+
+.db-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.db-quick-notes-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.db-quick-note {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--db-border);
+}
+
+.db-quick-note:last-child {
+  border-bottom: none;
+}
+
+.db-quick-note-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.db-quick-note-type {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--db-accent-text);
+  background: var(--db-accent-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.db-quick-note-date {
+  font-size: 11px;
+  color: var(--db-text-muted);
+  font-family: 'Geist Mono', monospace;
+}
+
+.db-quick-note-content {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--db-text);
+  white-space: pre-wrap;
+}
+
+.db-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--db-border);
+  background: #fafafa;
+}
+
+.db-modal-primary-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #111827;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.db-modal-primary-btn:hover {
+  opacity: 0.85;
+}
