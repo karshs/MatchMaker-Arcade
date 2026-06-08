@@ -21,16 +21,6 @@ function initials(first, last) {
   return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase()
 }
 
-function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const d = Math.floor(diff / 86400000)
-  if (d === 0) return 'Today'
-  if (d === 1) return 'Yesterday'
-  if (d < 7)  return `${d} days ago`
-  if (d < 30) return `${Math.floor(d / 7)}w ago`
-  return `${Math.floor(d / 30)}mo ago`
-}
-
 const NAV = [
   { icon: 'dashboard', label: 'Dashboard',     path: '/'          },
   { icon: 'group',     label: 'Customers',     path: '/customers' },
@@ -43,35 +33,45 @@ const JOURNEY_FILTERS = [
   'Matches Shared', 'Successful Match', 'Paused', 'Inactive',
 ]
 
+const LIMIT = 10 // rows per page
+
 export default function DashboardPage() {
   const { matchmaker, logout } = useAuth()
   const navigate = useNavigate()
 
-  /* state */
+  /* ── Paginated table state ── */
   const [customers,  setCustomers]  = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 })
+  const [page, setPage] = useState(1)
 
-  /* filters */
-  const [search,        setSearch]        = useState('')
-  const [statusFilter,  setStatusFilter]  = useState('')
-  const [religionFilter,setReligionFilter] = useState('')
-  const [cityFilter,    setCityFilter]    = useState('')
-  const [page,          setPage]          = useState(1)
+  /* ── Real stat counts (fetched once from all 100, no page limit) ── */
+  const [stats, setStats] = useState({
+    total:      0,
+    searching:  0,
+    successful: 0,
+    active:     0,
+  })
 
-  /* fetch */
+  /* ── Filters ── */
+  const [search,         setSearch]         = useState('')
+  const [statusFilter,   setStatusFilter]   = useState('')
+  const [religionFilter, setReligionFilter] = useState('')
+  const [cityFilter,     setCityFilter]     = useState('')
+
+  /* ── Fetch paginated table rows ── */
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
       const res = await customersApi.list({
-        search:         search   || undefined,
+        search:         search        || undefined,
         journey_status: statusFilter  || undefined,
         religion:       religionFilter || undefined,
-        city:           cityFilter || undefined,
+        city:           cityFilter    || undefined,
         page,
-        limit: 10,
+        limit: LIMIT,
         sort: 'last_updated',
       })
       setCustomers(res.data)
@@ -86,13 +86,55 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchCustomers() }, [fetchCustomers])
 
-  /* stats derived from current page */
-  const total        = pagination.total
-  const searching    = customers.filter(c => c.journey_status === 'Searching').length
-  const matchesWeek  = customers.filter(c => c.journey_status === 'Successful Match').length
-  const successful   = customers.filter(c =>
-    ['Successful Match', 'Interested', 'Call Scheduled'].includes(c.journey_status)
-  ).length
+  /* ── Fetch global stats once (no filters, high limit) ── */
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        // Fetch counts per relevant status using the count from pagination.total
+        const [allRes, searchingRes, successRes] = await Promise.all([
+          customersApi.list({ limit: 1, page: 1 }),
+          customersApi.list({ limit: 1, page: 1, journey_status: 'Searching' }),
+          customersApi.list({ limit: 1, page: 1, journey_status: 'Successful Match' }),
+        ])
+        setStats({
+          total:      allRes.pagination.total,
+          searching:  searchingRes.pagination.total,
+          successful: successRes.pagination.total,
+          active:     allRes.pagination.total,
+        })
+      } catch {
+        // stats are cosmetic — don't block the UI
+      }
+    }
+    fetchStats()
+  }, [])
+
+  /* ── Derived page numbers for the paginator ── */
+  const totalPages = pagination.totalPages || 1
+
+  // Show at most 5 page buttons around the current page
+  function getPageRange(current, total) {
+    const delta = 2
+    const range = []
+    for (
+      let i = Math.max(1, current - delta);
+      i <= Math.min(total, current + delta);
+      i++
+    ) {
+      range.push(i)
+    }
+    return range
+  }
+
+  const pageRange = getPageRange(page, totalPages)
+
+  /* ── Reset to page 1 when filters change ── */
+  function applyFilter(setter) {
+    return (e) => {
+      setter(e.target.value)
+      setPage(1)
+    }
+  }
 
   return (
     <div className="db db-shell">
@@ -136,7 +178,7 @@ export default function DashboardPage() {
         <header className="db-topbar">
           <div className="db-topbar-user">
             <div className="db-topbar-avatar">
-              {matchmaker?.name?.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() || 'MM'}
+              {matchmaker?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'MM'}
             </div>
             <div>
               <div className="db-topbar-name">{matchmaker?.name || 'Matchmaker'}</div>
@@ -164,27 +206,35 @@ export default function DashboardPage() {
         {/* Canvas */}
         <div className="db-canvas">
 
-          {/* Stat cards */}
+          {/* ── Stat cards (uses global stats, not page-local) ── */}
           <div className="db-stats">
             {[
-              { label: 'ACTIVE CUSTOMERS',    value: total,      extra: null },
-              { label: 'CURRENTLY SEARCHING', value: searching,  extra: null },
-              { label: 'MATCHES THIS WEEK',   value: matchesWeek,extra: <span className="db-stat-trend">↑ 12%</span> },
-              { label: 'SUCCESSFUL MATCHES',  value: successful, extra: null },
+              { label: 'ACTIVE CUSTOMERS',    value: stats.total,      icon: 'group' },
+              { label: 'CURRENTLY SEARCHING', value: stats.searching,  icon: 'manage_search' },
+              { label: 'SUCCESSFUL MATCHES',  value: stats.successful, icon: 'favorite' },
+              { label: 'SHOWING PAGE',
+                value: `${page} / ${totalPages}`,
+                icon: 'pages',
+                small: true },
             ].map(s => (
               <div key={s.label} className="db-stat-card">
                 <div className="db-stat-label">{s.label}</div>
-                <div className="db-stat-value">{s.value}{s.extra}</div>
+                <div className={`db-stat-value ${s.small ? 'db-stat-value--sm' : ''}`}>
+                  {s.value}
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Client table */}
+          {/* ── Client table ── */}
           <div className="db-table-card">
             <div className="db-table-header">
               <div className="db-table-title">
                 <span className="ms" style={{ color: '#C8920A' }}>star</span>
                 Priority Client Dossier
+                {pagination.total > 0 && (
+                  <span className="db-table-count">{pagination.total} total</span>
+                )}
               </div>
 
               {/* Filters */}
@@ -193,47 +243,41 @@ export default function DashboardPage() {
                   <span className="ms" style={{ fontSize: 15 }}>filter_alt</span>
                   FILTERS:
                 </span>
-                <select
-                  id="db-filter-status"
-                  className="db-filter-select"
-                  value={statusFilter}
-                  onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-                >
+
+                <select id="db-filter-status" className="db-filter-select"
+                  value={statusFilter} onChange={applyFilter(setStatusFilter)}>
                   <option value="">Stage: All</option>
                   {JOURNEY_FILTERS.slice(1).map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
 
-                <select
-                  id="db-filter-religion"
-                  className="db-filter-select"
-                  value={religionFilter}
-                  onChange={e => { setReligionFilter(e.target.value); setPage(1) }}
-                >
+                <select id="db-filter-religion" className="db-filter-select"
+                  value={religionFilter} onChange={applyFilter(setReligionFilter)}>
                   <option value="">Religion: Any</option>
-                  {['Hindu','Muslim','Christian','Sikh','Jain','Buddhist','Other'].map(r => (
+                  {['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Other'].map(r => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
 
-                <input
-                  id="db-filter-city"
-                  className="db-filter-select"
-                  placeholder="City: All"
-                  value={cityFilter}
-                  onChange={e => { setCityFilter(e.target.value); setPage(1) }}
-                  style={{ cursor: 'text' }}
-                />
+                <input id="db-filter-city" className="db-filter-select"
+                  placeholder="City: All" value={cityFilter}
+                  onChange={applyFilter(setCityFilter)}
+                  style={{ cursor: 'text' }} />
               </div>
             </div>
 
-            {/* Table */}
+            {/* Table body */}
             <div className="db-table-wrap">
               {error ? (
                 <div style={{ padding: 24, color: '#C62828' }}>{error}</div>
               ) : loading ? (
-                <div className="db-loading">Loading clients…</div>
+                <div className="db-loading">
+                  <span className="ms db-loading-icon">sync</span>
+                  Loading clients…
+                </div>
+              ) : customers.length === 0 ? (
+                <div className="db-loading">No clients match the current filters.</div>
               ) : (
                 <table className="db-table">
                   <thead>
@@ -268,14 +312,12 @@ export default function DashboardPage() {
                                 {c.first_name} {c.last_name}
                               </div>
                               <div className="db-client-id">
-                                #{String(c.id).padStart(4, '0')}
+                                #{String(c.id).slice(0, 8)}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="db-cell-muted">
-                          {c.age} / {c.city}
-                        </td>
+                        <td className="db-cell-muted">{c.age} / {c.city}</td>
                         <td className="db-cell-muted">{c.marital_status}</td>
                         <td className="db-cell-muted">{c.occupation}</td>
                         <td>
@@ -301,25 +343,67 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Pagination */}
+            {/* ── Pagination row ── */}
             <div className="db-pagination">
               <span className="db-page-info">
-                Showing {customers.length} of {pagination.total} clients
+                Showing{' '}
+                <strong>{(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, pagination.total)}</strong>
+                {' '}of{' '}
+                <strong>{pagination.total}</strong> clients
               </span>
-              <div className="db-page-btns">
+
+              <div className="db-page-controls">
+                {/* Prev */}
                 <button
-                  className="db-page-btn"
+                  className="db-page-btn db-page-arrow"
                   id="db-prev-page"
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
+                  title="Previous page"
                 >
                   <span className="ms">chevron_left</span>
                 </button>
+
+                {/* First page + ellipsis */}
+                {pageRange[0] > 1 && (
+                  <>
+                    <button className="db-page-btn db-page-num" onClick={() => setPage(1)}>1</button>
+                    {pageRange[0] > 2 && <span className="db-page-ellipsis">…</span>}
+                  </>
+                )}
+
+                {/* Numbered pages */}
+                {pageRange.map(n => (
+                  <button
+                    key={n}
+                    className={`db-page-btn db-page-num ${n === page ? 'db-page-num--active' : ''}`}
+                    id={`db-page-${n}`}
+                    onClick={() => setPage(n)}
+                    disabled={n === page}
+                  >
+                    {n}
+                  </button>
+                ))}
+
+                {/* Last page + ellipsis */}
+                {pageRange[pageRange.length - 1] < totalPages && (
+                  <>
+                    {pageRange[pageRange.length - 1] < totalPages - 1 && (
+                      <span className="db-page-ellipsis">…</span>
+                    )}
+                    <button className="db-page-btn db-page-num" onClick={() => setPage(totalPages)}>
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+
+                {/* Next */}
                 <button
-                  className="db-page-btn"
+                  className="db-page-btn db-page-arrow"
                   id="db-next-page"
-                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                  disabled={page === pagination.totalPages}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  title="Next page"
                 >
                   <span className="ms">chevron_right</span>
                 </button>
