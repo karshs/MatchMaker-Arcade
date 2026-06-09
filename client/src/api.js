@@ -3,7 +3,7 @@
    All routes go through /api (Vite proxies to localhost:3000)
    ============================================================ */
 
-const BASE = '/api';
+const BASE = import.meta.env.VITE_API_URL || '/api';
 
 /** Returns the stored JWT or null */
 function getToken() {
