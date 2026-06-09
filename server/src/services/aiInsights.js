@@ -13,10 +13,10 @@ const { config } = require('../config/env');
 const { scoreMatch, getMatchLabel, getAge } = require('./matchEngine');
 
 // Only initialise the client if a key is available
-let openai = null;
-if (config.openaiApiKey && config.aiMode === 'openai') {
-  const OpenAI = require('openai');
-  openai = new OpenAI({ apiKey: config.openaiApiKey });
+let genai = null;
+if (config.geminiApiKey && config.aiMode === 'gemini') {
+  const { GoogleGenAI } = require('@google/genai');
+  genai = new GoogleGenAI({ apiKey: config.geminiApiKey });
 }
 
 function safe(value, fallback = 'Not specified') {
@@ -125,28 +125,28 @@ async function generateInsights(customerA, customerB) {
   // Always compute score from the engine (not cached) for accuracy
   const { score, breakdown } = scoreMatch(customerA, customerB);
 
-  // Use mock if AI_MODE is not 'openai' or key is missing
-  if (!openai || config.aiMode !== 'openai') {
+  // Use mock if AI_MODE is not 'gemini' or key is missing
+  if (!genai || config.aiMode !== 'gemini') {
     return { ...generateMock(customerA, customerB, score, breakdown), score, breakdown };
   }
 
   try {
     const prompt = buildPrompt(customerA, customerB, score, breakdown);
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' }, // guarantees valid JSON back
-      max_tokens: 500,
-      temperature: 0.7,
+    const response = await genai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        temperature: 0.7,
+      }
     });
 
-    // GPT occasionally wraps its response in ```json ... ``` even with json_object mode.
-    const parsed = safeJsonParse(completion.choices[0].message.content);
-    return { ...parsed, score, breakdown, generated_by: 'openai' };
+    const parsed = safeJsonParse(response.text);
+    return { ...parsed, score, breakdown, generated_by: 'gemini' };
   } catch (err) {
-    // If OpenAI fails, fall back to mock gracefully — never crash the user's request
-    console.error('[AI] OpenAI call failed, using mock fallback:', err.message);
+    // If Gemini fails, fall back to mock gracefully — never crash the user's request
+    console.error('[AI] Gemini call failed, using mock fallback:', err.message);
     return { ...generateMock(customerA, customerB, score, breakdown), score, breakdown };
   }
 }

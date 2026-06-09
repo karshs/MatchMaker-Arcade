@@ -28,8 +28,8 @@ const config = {
   adminPassword: requireEnv('ADMIN_PASSWORD'),
   adminName: optionalEnv('ADMIN_NAME', 'Matchmaker Admin'),
 
-  openaiApiKey: optionalEnv('OPENAI_API_KEY', ''),
-  aiMode: optionalEnv('AI_MODE', 'mock'), // 'openai' or 'mock'
+  geminiApiKey: optionalEnv('GEMINI_API_KEY', ''),
+  aiMode: optionalEnv('AI_MODE', 'mock'), // 'gemini' or 'mock'
 };
 
 module.exports = { config };
