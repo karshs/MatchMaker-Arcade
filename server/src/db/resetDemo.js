@@ -2,7 +2,8 @@
 // Run with: npm run reset:demo
 
 process.env.NODE_NO_WARNINGS = '1';
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 
 const pool = new Pool({

@@ -63,8 +63,6 @@ function timeAgo(d) {
 const NAV = [
   { icon: 'dashboard', label: 'Dashboard',     path: '/'          },
   { icon: 'group',     label: 'Customers',     path: '/customers', active: true },
-  { icon: 'search',    label: 'Global Search', path: '/'          },
-  { icon: 'event',     label: 'Calendar',      path: '/'          },
 ]
 
 export default function CustomerDetailPage() {
