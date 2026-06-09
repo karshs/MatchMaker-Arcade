@@ -6,7 +6,6 @@ import DashboardPage     from './pages/DashboardPage'
 import CustomerDetailPage from './pages/CustomerDetailPage'
 import MatchingPage      from './pages/MatchingPage'
 
-/* ── Protected route — redirects to /login if not authenticated ── */
 function PrivateRoute({ children }) {
   const { matchmaker, loading } = useAuth()
 
@@ -25,14 +24,12 @@ function PrivateRoute({ children }) {
   return matchmaker ? children : <Navigate to="/login" replace />
 }
 
-/* ── Login route — redirects to / if already authenticated ── */
 function PublicRoute({ children }) {
   const { matchmaker, loading } = useAuth()
   if (loading) return null
   return matchmaker ? <Navigate to="/" replace /> : children
 }
 
-/* ── Root app — Router + Auth wiring ── */
 function AppRoutes() {
   const { login } = useAuth()
 

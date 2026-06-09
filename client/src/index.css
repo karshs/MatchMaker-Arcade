@@ -2,12 +2,10 @@
    GLOBAL CSS — The Date Crew | Golden Yellow Theme
    ============================================================ */
 
-/* ── Scale fix — prevents the card looking zoomed-in ──────── */
 html {
   font-size: 14px;   /* 14px base = visually comfortable on 1080p+ */
 }
 
-/* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Primary golden-yellow palette */
   --color-primary:        #C8920A;   /* medium-dark golden yellow */
@@ -46,7 +44,6 @@ html {
   --transition: 0.2s ease;
 }
 
-/* ── Reset ─────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -65,7 +62,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Utility ───────────────────────────────────────────────── */
 button {
   cursor: pointer;
   font-family: var(--font-family);
@@ -83,7 +79,6 @@ a {
   color: inherit;
 }
 
-/* ── Material Symbols — global icon class ──────────────────── */
 /* Applied via className="ms" across all pages */
 .ms,
 .material-symbols-outlined {

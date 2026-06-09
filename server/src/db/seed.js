@@ -11,8 +11,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// ── Data Pools ─────────────────────────────────────────────────────────────────
-
 const MALE_NAMES = [
   'Arjun','Rahul','Vikram','Amit','Rohan','Sanjay','Karan','Nikhil',
   'Aditya','Suresh','Ravi','Deepak','Manish','Vikas','Gaurav',
@@ -146,8 +144,6 @@ const RELIGION_DIST = [
   'Christian','Christian','Sikh','Sikh','Jain','Jain',
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
 // Deterministic pseudo-random based on a seed (same input = same output)
 function sr(seed) {
   const x = Math.sin(seed + 1) * 10000;
@@ -167,8 +163,6 @@ function pickN(arr, n, seed) {
 }
 
 function randInt(min, max, seed) { return Math.floor(sr(seed) * (max - min + 1)) + min; }
-
-// ── Profile Generator ──────────────────────────────────────────────────────────
 
 function generateProfile(index) {
   const s = index * 137; // prime multiplier spreads values across the range
@@ -281,8 +275,6 @@ function generateProfile(index) {
     journey_status: journeyStatus,
   };
 }
-
-// ── Main Seed Function ─────────────────────────────────────────────────────────
 
 async function seed() {
   const client = await pool.connect();

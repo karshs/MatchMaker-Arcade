@@ -17,7 +17,6 @@ const JOURNEY_STATUSES = [
   'Successful Match', 'Paused', 'Inactive',
 ];
 
-// ── GET /api/customers ─────────────────────────────────────────
 // Returns a paginated, filtered, searchable list of customers
 async function getCustomers(req, res, next) {
   try {
@@ -90,7 +89,6 @@ async function getCustomers(req, res, next) {
   }
 }
 
-// ── GET /api/customers/:id ─────────────────────────────────────
 // Returns the full profile of a single customer
 async function getCustomerById(req, res, next) {
   try {
@@ -114,7 +112,6 @@ async function getCustomerById(req, res, next) {
   }
 }
 
-// ── PUT /api/customers/:id ─────────────────────────────────────
 // Updates editable profile fields (not journey_status — use PATCH for that)
 async function updateCustomer(req, res, next) {
   try {
@@ -168,7 +165,6 @@ async function updateCustomer(req, res, next) {
   }
 }
 
-// ── PATCH /api/customers/:id/journey ──────────────────────────
 // Updates journey status AND logs the change to journey_events (atomic)
 async function updateJourneyStatus(req, res, next) {
   const { id } = req.params;
@@ -220,7 +216,6 @@ async function updateJourneyStatus(req, res, next) {
   }
 }
 
-// ── GET /api/customers/:id/journey-events ─────────────────────
 // Returns the full journey timeline for a customer
 async function getJourneyEvents(req, res, next) {
   try {

@@ -19,25 +19,10 @@ if (config.openaiApiKey && config.aiMode === 'openai') {
   openai = new OpenAI({ apiKey: config.openaiApiKey });
 }
 
-// ── Safe Field Helper ──────────────────────────────────────────────────────────
-// Prevents "undefined" from appearing in any generated text output.
-// Always call this before embedding a profile field in a string.
-
 function safe(value, fallback = 'Not specified') {
   if (value === null || value === undefined || value === '') return fallback;
   return String(value);
 }
-
-// ── Breakdown Normaliser ───────────────────────────────────────────────────────
-// The engine now returns different breakdown keys depending on gender.
-// This normalises both into a common shape that buildPrompt and generateMock
-// can read without caring about which scorer ran.
-//
-// Male breakdown keys:  children_preference, age_gap, height, income,
-//                       family_values, location, lifestyle
-// Female breakdown keys: children_preference, family_values,
-//                        profession_compatibility, relocation_alignment,
-//                        marriage_timeline, income, languages, lifestyle
 
 function normaliseBreakdown(breakdown) {
   return {
@@ -57,7 +42,6 @@ function normaliseBreakdown(breakdown) {
   };
 }
 
-// ── JSON Parser (Crash-Safe) ───────────────────────────────────────────────────
 // GPT sometimes wraps its JSON response in markdown code fences even when asked
 // not to (e.g.  ```json { ... } ```). Stripping those before parsing prevents
 // a SyntaxError that would silently fall through to the mock fallback —
@@ -70,8 +54,6 @@ function safeJsonParse(raw) {
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   return JSON.parse(text);
 }
-
-// ── Prompt Builder ─────────────────────────────────────────────────────────────
 
 function buildPrompt(a, b, score, breakdown) {
   const nb = normaliseBreakdown(breakdown);
@@ -115,7 +97,6 @@ Return ONLY valid JSON with this exact structure — no extra text, no markdown 
 }`;
 }
 
-// ── Mock Insights Generator ────────────────────────────────────────────────────
 // Reads real profile + score data to generate realistic template-based insights.
 // Uses safe() on every field to prevent "undefined" appearing in output text.
 // Handles both male and female scorer breakdown shapes via normaliseBreakdown().
@@ -214,8 +195,6 @@ function generateMock(a, b, score, breakdown) {
   };
 }
 
-// ── Main Entry Point ───────────────────────────────────────────────────────────
-
 async function generateInsights(customerA, customerB) {
   // Always compute score from the engine (not cached) for accuracy
   const { score, breakdown } = scoreMatch(customerA, customerB);
@@ -236,7 +215,6 @@ async function generateInsights(customerA, customerB) {
       temperature: 0.7,
     });
 
-    // FIXED: use safeJsonParse() to strip markdown fences before parsing.
     // GPT occasionally wraps its response in ```json ... ``` even with json_object mode.
     const parsed = safeJsonParse(completion.choices[0].message.content);
     return { ...parsed, score, breakdown, generated_by: 'openai' };

@@ -82,7 +82,7 @@ export default function CustomerDetailPage() {
   const [noteText,  setNoteText]  = useState('')
   const [saving,    setSaving]    = useState(false)
 
-  /* ── Status dropdown state ── */
+
   const [statusOpen,    setStatusOpen]    = useState(false)
   const [statusSaving,  setStatusSaving]  = useState(false)
   const statusRef = useRef(null)
@@ -98,7 +98,7 @@ export default function CustomerDetailPage() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  /* ── Fetch all data in parallel ── */
+
   const load = useCallback(async () => {
     setLoading(true); setError('')
     try {
@@ -123,7 +123,7 @@ export default function CustomerDetailPage() {
 
   useEffect(() => { load() }, [load])
 
-  /* ── Save note ── */
+
   async function handleSaveNote() {
     if (!noteText.trim()) return
     setSaving(true)
@@ -139,7 +139,7 @@ export default function CustomerDetailPage() {
     }
   }
 
-  /* ── Update journey status ── */
+
   async function handleStatusChange(newStatus) {
     if (!customer || newStatus === customer.journey_status) {
       setStatusOpen(false)
@@ -163,7 +163,7 @@ export default function CustomerDetailPage() {
     }
   }
 
-  /* ── Loading / error states ── */
+
   if (loading) {
     return (
       <div className="cd cd-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>

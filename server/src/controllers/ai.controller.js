@@ -19,8 +19,6 @@ async function getInsights(req, res, next) {
       return next(new AppError('customer_id and match_customer_id are required.', 400));
     }
 
-    // ── Cache Lookup ────────────────────────────────────────────────────────────
-    // FIXED: Check BOTH orderings (A,B) and (B,A) so reversing the argument
     // order doesn't cause a redundant OpenAI call. Match insights are symmetric.
     const cached = await query(
       `SELECT ai_insights FROM matches
@@ -41,7 +39,6 @@ async function getInsights(req, res, next) {
       });
     }
 
-    // ── Fetch Both Profiles ─────────────────────────────────────────────────────
     const customers = await query(
       'SELECT * FROM customers WHERE id = ANY($1) AND is_active = TRUE',
       [[customer_id, match_customer_id]]
@@ -54,12 +51,9 @@ async function getInsights(req, res, next) {
     const customerA = customers.find(c => c.id === customer_id);
     const customerB = customers.find(c => c.id === match_customer_id);
 
-    // ── Generate Insights ────────────────────────────────────────────────────────
     // Calls OpenAI (or mock fallback) — never throws, always returns a valid object
     const insights = await generateInsights(customerA, customerB);
 
-    // ── Cache via UPSERT ─────────────────────────────────────────────────────────
-    // FIXED: Previously used a bare UPDATE which silently did nothing if the match
     // row didn't exist yet (e.g., matchmaker previewing before saving).
     // Now uses INSERT ... ON CONFLICT DO UPDATE so insights are always persisted.
     await pool.query(

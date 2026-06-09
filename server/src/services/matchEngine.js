@@ -12,8 +12,6 @@
  *        2B. scoreFemaleCustomer — weights values, profession sector, relocation, timeline
  */
 
-// ── Age Helper ─────────────────────────────────────────────────────────────────
-
 function getAge(dob) {
   if (!dob) return 0;
   const birth = new Date(dob);
@@ -25,7 +23,6 @@ function getAge(dob) {
   return Math.max(0, age);
 }
 
-// ── Education Rank Map ─────────────────────────────────────────────────────────
 // Higher number = more qualified. Used in scoring, not filtering.
 
 const EDU_RANK = {
@@ -35,14 +32,11 @@ const EDU_RANK = {
   'M.Sc': 6, 'M.Tech': 6, 'MBA': 7, 'CA': 7, 'Ph.D': 8,
 };
 
-// ── Marriage Timeline Order ────────────────────────────────────────────────────
 // Used to score urgency alignment in Phase 2B (female customer scorer).
 
 const TIMELINE_ORDER = [
   'Within 6 months', '6-12 months', '1-2 years', 'After 2 years', 'Not Sure',
 ];
-
-// ── Diet Compatibility Map ─────────────────────────────────────────────────────
 
 const DIET_COMPAT = {
   Jain:             ['Jain', 'Vegetarian'],
@@ -52,9 +46,8 @@ const DIET_COMPAT = {
   Vegan:            ['Vegan', 'Vegetarian'],
 };
 
-// ── PHASE 1: Hard Filters ──────────────────────────────────────────────────────
 // Returns { passed: boolean, reason: string }
-// FIXED: All preference checks are now bilateral — candidate's preferences
+
 // are enforced just as strictly as the customer's.
 
 function hardFilter(customer, candidate) {
@@ -135,7 +128,6 @@ function hardFilter(customer, candidate) {
   return { passed: true };
 }
 
-// ── PHASE 2A: Male Customer Scorer ───────────────────────────────────────────
 // customer = Male, candidate = Female. Total: 100 pts.
 //
 // Based on Indian matrimonial norms (Shaadi.com / Jeevansathi research):
@@ -153,14 +145,12 @@ function scoreMaleCustomer(male, female) {
     lifestyle:           0,  // max 15 — diet, smoking, drinking
   };
 
-  // ── Children Preference (20 pts) ─────────────────────────────
   const kc = male.want_kids;
   const kd = female.want_kids;
   if (kc === kd)                                           breakdown.children_preference = 20;
   else if (kc === 'Open' || kd === 'Open')                 breakdown.children_preference = 12;
   else if (kc === 'Already Has' || kd === 'Already Has')   breakdown.children_preference = 8;
 
-  // ── Age Gap (15 pts) — female younger is the strong preference in Indian matrimony
   const maleAge   = getAge(male.date_of_birth);
   const femaleAge = getAge(female.date_of_birth);
   const ageDiff   = maleAge - femaleAge; // positive = male older
@@ -170,7 +160,6 @@ function scoreMaleCustomer(male, female) {
   else if (ageDiff < 0  && ageDiff >= -2) breakdown.age_gap = 7;  // female slightly older — tolerable
   // female more than 2 yrs older = 0 pts
 
-  // ── Height (10 pts) — male taller is the social norm ─────────
   const mH = male.height_cm   || 0;
   const fH = female.height_cm || 0;
   if (mH > 0 && fH > 0) {
@@ -181,7 +170,6 @@ function scoreMaleCustomer(male, female) {
     // female taller = 0 pts
   }
 
-  // ── Income (15 pts) — male is expected to be the primary earner ──
   const mInc = male.annual_income   || 0;
   const fInc = female.annual_income || 0;
   if (mInc > 0 && fInc > 0) {
@@ -193,7 +181,6 @@ function scoreMaleCustomer(male, female) {
     breakdown.income = 10; // female income unknown — give benefit of doubt
   }
 
-  // ── Family Values (15 pts) ────────────────────────────────────
   const VALUES_ORDER = ['Traditional', 'Moderate', 'Liberal'];
   const vi = VALUES_ORDER.indexOf(male.family_values);
   const vj = VALUES_ORDER.indexOf(female.family_values);
@@ -203,7 +190,6 @@ function scoreMaleCustomer(male, female) {
     else if (valueDiff === 1) breakdown.family_values = 8;
   }
 
-  // ── Location (10 pts) ─────────────────────────────────────────
   if (male.city && female.city && male.city === female.city) {
     breakdown.location = 10;
   } else if (male.state && female.state && male.state === female.state) {
@@ -212,7 +198,6 @@ function scoreMaleCustomer(male, female) {
     breakdown.location = 4;
   }
 
-  // ── Lifestyle (15 pts) ────────────────────────────────────────
   // Diet (5 pts)
   const dietCompat = DIET_COMPAT[male.diet] || [];
   if (female.diet && dietCompat.includes(female.diet)) breakdown.lifestyle += 5;
@@ -239,7 +224,6 @@ function scoreMaleCustomer(male, female) {
   return { score, breakdown };
 }
 
-// ── PHASE 2B: Female Customer Scorer ──────────────────────────────────────────
 // customer = Female, candidate = Male. Total: 100 pts.
 //
 // Research: Women on matrimonial platforms (Jeevansathi user studies,
@@ -258,14 +242,12 @@ function scoreFemaleCustomer(female, male) {
     lifestyle:                0,  // max 10 — diet, smoking, drinking
   };
 
-  // ── Children Preference (15 pts) ─────────────────────────────
   const kc = female.want_kids;
   const kd = male.want_kids;
   if (kc === kd)                                          breakdown.children_preference = 15;
   else if (kc === 'Open' || kd === 'Open')                breakdown.children_preference = 10;
   else if (kc === 'Already Has' || kd === 'Already Has')  breakdown.children_preference = 6;
 
-  // ── Family Values (20 pts) ─────────────────────────────────────
   // Highest weight — women prioritise values alignment more than any other factor
   const VALUES_ORDER = ['Traditional', 'Moderate', 'Liberal'];
   const vi = VALUES_ORDER.indexOf(female.family_values);
@@ -277,7 +259,6 @@ function scoreFemaleCustomer(female, male) {
     // diff of 2 = 0 pts
   }
 
-  // ── Profession Compatibility (15 pts) ─────────────────────────
   // Same employment sector signals shared work culture and lifestyle expectations.
   // e.g. Govt + Govt = job security, similar timings; Private + Private = growth mindset.
   const SECTOR_ORDER = ['Government', 'Private', 'Business', 'Not Working', 'Other'];
@@ -295,7 +276,6 @@ function scoreFemaleCustomer(female, male) {
     }
   }
 
-  // ── Relocation Alignment (10 pts) ─────────────────────────────
   if (female.open_to_relocate && male.open_to_relocate) {
     breakdown.relocation_alignment = 10; // both flexible
   } else if (female.open_to_relocate || male.open_to_relocate) {
@@ -304,7 +284,6 @@ function scoreFemaleCustomer(female, male) {
     breakdown.relocation_alignment = 2;  // neither — not a dealbreaker, just lower score
   }
 
-  // ── Marriage Timeline (10 pts) ─────────────────────────────────
   // Critical for female customers — urgency mismatch is the top reported dropout
   // reason on Indian matrimonial platforms.
   const ti = TIMELINE_ORDER.indexOf(female.marriage_timeline);
@@ -317,7 +296,6 @@ function scoreFemaleCustomer(female, male) {
     // > 2 steps apart = 0 pts
   }
 
-  // ── Income (10 pts) — he earns stably; she checks if he meets her expectations ──
   const mInc = male.annual_income   || 0;
   const fInc = female.annual_income || 0;
   if (mInc > 0) {
@@ -330,7 +308,6 @@ function scoreFemaleCustomer(female, male) {
     }
   }
 
-  // ── Languages (10 pts) ────────────────────────────────────────
   const fLangs = female.languages || [];
   const mLangs = male.languages   || [];
   const shared = fLangs.filter(l => mLangs.includes(l)).length;
@@ -339,7 +316,6 @@ function scoreFemaleCustomer(female, male) {
     breakdown.languages = Math.min(10, Math.round((Math.min(shared, maxPossible) / maxPossible) * 10));
   }
 
-  // ── Lifestyle (10 pts) ────────────────────────────────────────
   // Diet (4 pts)
   const dietCompat = DIET_COMPAT[female.diet] || [];
   if (male.diet && dietCompat.includes(male.diet)) breakdown.lifestyle += 4;
@@ -366,7 +342,6 @@ function scoreFemaleCustomer(female, male) {
   return { score, breakdown };
 }
 
-// ── Phase 2 Router: scoreMatch ─────────────────────────────────────────────────
 // Public API used by aiInsights.js and any caller that doesn't know the gender.
 // Transparently routes to the correct gender-specific scorer.
 
@@ -377,7 +352,6 @@ function scoreMatch(customer, candidate) {
   return scoreFemaleCustomer(customer, candidate);
 }
 
-// ── Match Label ────────────────────────────────────────────────────────────────
 // Maps a numeric score to a human-readable tier label.
 // Used in the API response and by aiInsights.js for the summary line.
 
@@ -388,7 +362,6 @@ function getMatchLabel(score) {
   return 'Low Compatibility';
 }
 
-// ── Interests Overlap ─────────────────────────────────────────────────────────
 // Returns the count of shared interest tags between two profiles.
 // Not added to the 100-pt score — used as a secondary sort tiebreaker only.
 
@@ -398,7 +371,6 @@ function interestsOverlap(a, b) {
   return ai.filter(i => bi.includes(i)).length;
 }
 
-// ── Activity Decay Multiplier ──────────────────────────────────────────────────
 // Demotes stale profiles so active clients surface first.
 // Based on the industry "zombie penalty" pattern used by The Date Crew and
 // similar platforms (see Research.md — Activity Decay section).
@@ -421,7 +393,6 @@ function getActivityMultiplier(lastUpdated) {
   return 0.60;
 }
 
-// ── Main Engine Function ───────────────────────────────────────────────────────
 // Takes one customer and an array of all other active candidates.
 // Returns top N matches sorted by decayed score (desc), interests overlap as tiebreaker.
 //

@@ -11,7 +11,6 @@
   padding: 24px;
 }
 
-/* ── Card ──────────────────────────────────────────────────── */
 .login-card {
   background: #FFFFFF;
   border-radius: 12px;
@@ -32,7 +31,6 @@
   to   { opacity: 1; transform: translateY(0);    }
 }
 
-/* ── Logo icon ─────────────────────────────────────────────── */
 .login-logo-wrap {
   width: 56px;
   height: 56px;
@@ -50,7 +48,6 @@
   height: 32px;
 }
 
-/* ── Title ─────────────────────────────────────────────────── */
 .login-title-wrap {
   display: flex;
   align-items: center;
@@ -82,7 +79,6 @@
   margin-bottom: 32px;
 }
 
-/* ── Form ──────────────────────────────────────────────────── */
 .login-form {
   width: 100%;
   display: flex;
@@ -138,7 +134,6 @@
   color: var(--color-text-muted);
 }
 
-/* ── Sign-in button ────────────────────────────────────────── */
 .login-btn {
   width: 100%;
   height: 48px;
@@ -173,7 +168,6 @@
   transform: none;
 }
 
-/* ── Forgot password ───────────────────────────────────────── */
 .login-forgot {
   margin-top: 20px;
   font-size: 13.5px;
@@ -189,7 +183,6 @@
   text-decoration: underline;
 }
 
-/* ── Divider ───────────────────────────────────────────────── */
 .login-divider {
   width: 100%;
   height: 1px;
@@ -197,7 +190,6 @@
   margin: 22px 0 18px;
 }
 
-/* ── Footer ────────────────────────────────────────────────── */
 .login-footer {
   display: flex;
   align-items: center;
@@ -213,7 +205,6 @@
   flex-shrink: 0;
 }
 
-/* ── Error message ─────────────────────────────────────────── */
 .login-error {
   background: #FEF2F2;
   border: 1px solid #FCA5A5;

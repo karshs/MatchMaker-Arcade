@@ -3,7 +3,6 @@
    Golden Yellow theme + Status chip colour system
    ============================================================ */
 
-/* ── Dashboard-specific tokens ─────────────────────────────── */
 .db {
   /* surfaces */
   --db-bg:           #FAFAF8;
@@ -62,7 +61,6 @@
   font-family: 'Geist', 'Inter', sans-serif;
 }
 
-/* ── Layout shell ───────────────────────────────────────────── */
 .db-shell {
   display: flex;
   height: 100vh;
@@ -70,7 +68,6 @@
   background: var(--db-bg);
 }
 
-/* ── Sidebar ────────────────────────────────────────────────── */
 .db-sidebar {
   width: var(--db-sidebar-w);
   min-width: var(--db-sidebar-w);
@@ -177,7 +174,6 @@
   gap: 2px;
 }
 
-/* ── Main area ─────────────────────────────────────────────── */
 .db-main {
   flex: 1;
   display: flex;
@@ -186,7 +182,6 @@
   overflow: hidden;
 }
 
-/* ── Topbar ────────────────────────────────────────────────── */
 .db-topbar {
   display: flex;
   align-items: center;
@@ -292,7 +287,6 @@
 
 .db-icon-btn .ms { font-size: 22px; }
 
-/* ── Scrollable canvas ─────────────────────────────────────── */
 .db-canvas {
   flex: 1;
   overflow: hidden;       /* no outer scroll — table scrolls internally */
@@ -303,7 +297,6 @@
   min-height: 0;          /* flex child must be allowed to shrink */
 }
 
-/* ── Stat cards ────────────────────────────────────────────── */
 .db-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -355,7 +348,6 @@
 
 .db-stat-trend .ms { font-size: 14px; }
 
-/* ── Client table section ──────────────────────────────────── */
 .db-section {
   background: var(--db-card);
   border: 1px solid var(--db-border);
@@ -448,7 +440,6 @@
 .db-more-filters-btn:hover { background: #e8e6e1; }
 .db-more-filters-btn .ms { font-size: 15px; }
 
-/* ── Table ─────────────────────────────────────────────────── */
 .db-table-wrap {
   overflow-x: auto;
   overflow-y: auto;   /* internal scroll — pagination stays fixed below */
@@ -632,7 +623,6 @@
   border-color: var(--chip-closed-border);
 }
 
-/* ── Dossier button ────────────────────────────────────────── */
 .db-dossier-btn {
   display: inline-flex;
   align-items: center;
@@ -672,7 +662,6 @@
 .db-more-btn:hover { color: var(--db-text); background: rgba(0,0,0,0.05); }
 .db-more-btn .ms { font-size: 20px; }
 
-/* ── Table footer / pagination ─────────────────────────────── */
 .db-table-footer {
   padding: 12px 20px;
   border-top: 1px solid var(--db-border);
@@ -709,7 +698,6 @@
 .db-page-btn:hover { background: var(--db-sidebar-bg); }
 .db-page-btn .ms { font-size: 18px; }
 
-/* ── Material Symbols helper ────────────────────────────────── */
 .ms {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
@@ -727,8 +715,6 @@
   -webkit-font-smoothing: antialiased;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-
-/* ── New class aliases used by DashboardPage.jsx ───────────── */
 
 /* Topbar user area */
 .db-topbar-user    { display: flex; align-items: center; gap: 10px; }
@@ -932,7 +918,6 @@
   vertical-align: middle;
 }
 
-/* ── Quick Notes Feature ────────────────────────────────────── */
 .db-quick-notes-btn {
   display: inline-flex;
   align-items: center;

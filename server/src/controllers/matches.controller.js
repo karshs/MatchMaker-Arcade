@@ -78,7 +78,6 @@ async function getMatches(req, res, next) {
   }
 }
 
-
 // POST /api/customers/:id/matches/:matchId/send
 // Saves the match to the DB and marks it as Sent (mock email)
 async function sendMatch(req, res, next) {

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNotification } from '../context/NotificationContext'
 import './LoginPage.css'
 
-/* ── SVG Icons (inline — no extra dependency) ──────────────── */
 const HeartIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -50,7 +49,6 @@ const ShieldIcon = () => (
   </svg>
 )
 
-/* ── Component ─────────────────────────────────────────────── */
 // onLogin(email, password) is injected by App.jsx (calls useAuth().login)
 export default function LoginPage({ onLogin }) {
   const [email,    setEmail]    = useState('')

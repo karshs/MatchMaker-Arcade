@@ -20,7 +20,6 @@ const DefaultAvatar = ({ className, style = {} }) => (
   </svg>
 )
 
-/* ── Tier helpers ──────────────────────────────────────────── */
 function getTier(score) {
   if (score >= 90) return 'excellent'
   if (score >= 70) return 'good'
@@ -38,7 +37,6 @@ const NAV = [
   { icon: 'group',     label: 'Customers',     path: '/customers', active: true },
 ]
 
-/* ── Match card ────────────────────────────────────────────── */
 function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
   const tier      = getTier(candidate.compatibility_score)
   const tierLabel = getTierLabel(candidate.compatibility_score)
@@ -178,7 +176,6 @@ function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
   )
 }
 
-/* ── Page ──────────────────────────────────────────────────── */
 export default function MatchingPage() {
   const { id }   = useParams()  // customerId
   const navigate = useNavigate()

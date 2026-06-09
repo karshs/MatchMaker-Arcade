@@ -38,7 +38,6 @@ async function request(method, path, body) {
   return json;
 }
 
-/* ── Auth ──────────────────────────────────────────────────── */
 export const authApi = {
   /** POST /api/auth/login */
   login: (email, password) =>
@@ -48,7 +47,6 @@ export const authApi = {
   me: () => request('GET', '/auth/me'),
 };
 
-/* ── Customers ─────────────────────────────────────────────── */
 export const customersApi = {
   /**
    * GET /api/customers
@@ -79,7 +77,6 @@ export const customersApi = {
   sentMatches: (id) => request('GET', `/customers/${id}/sent-matches`),
 };
 
-/* ── Matches ───────────────────────────────────────────────── */
 export const matchesApi = {
   /**
    * GET /api/customers/:id/matches
@@ -96,7 +93,6 @@ export const matchesApi = {
     request('POST', `/customers/${customerId}/matches/${matchId}/send`, { score }),
 };
 
-/* ── Notes ─────────────────────────────────────────────────── */
 export const notesApi = {
   /** GET /api/customers/:id/notes */
   list: (customerId) => request('GET', `/customers/${customerId}/notes`),

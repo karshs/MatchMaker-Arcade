@@ -19,7 +19,6 @@ const DefaultAvatar = ({ className, style = {} }) => (
   </svg>
 )
 
-/* ── Status chip config ────────────────────────────────────── */
 const STATUS_CLASS = {
   'Searching':         'searching',
   'Profile Verified':  'verified',
@@ -52,14 +51,12 @@ export default function DashboardPage() {
   const { matchmaker, logout } = useAuth()
   const navigate = useNavigate()
 
-  /* ── Paginated table state ── */
   const [customers,  setCustomers]  = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 })
   const [page, setPage] = useState(1)
 
-  /* ── Real stat counts (fetched once from all 100, no page limit) ── */
   const [stats, setStats] = useState({
     total:      0,
     searching:  0,
@@ -67,13 +64,11 @@ export default function DashboardPage() {
     active:     0,
   })
 
-  /* ── Filters ── */
   const [search,         setSearch]         = useState('')
   const [statusFilter,   setStatusFilter]   = useState('')
   const [religionFilter, setReligionFilter] = useState('')
   const [cityFilter,     setCityFilter]     = useState('')
 
-  /* ── Quick Notes State ── */
   const [quickNotesCustomer, setQuickNotesCustomer] = useState(null)
   const [quickNotes,         setQuickNotes]         = useState([])
   const [loadingNotes,       setLoadingNotes]       = useState(false)
@@ -93,7 +88,6 @@ export default function DashboardPage() {
     }
   }, [])
 
-  /* ── Fetch paginated table rows ── */
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -119,7 +113,6 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchCustomers() }, [fetchCustomers])
 
-  /* ── Fetch global stats once (no filters, high limit) ── */
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -142,7 +135,6 @@ export default function DashboardPage() {
     fetchStats()
   }, [])
 
-  /* ── Derived page numbers for the paginator ── */
   const totalPages = pagination.totalPages || 1
 
   // Show at most 5 page buttons around the current page
@@ -161,7 +153,6 @@ export default function DashboardPage() {
 
   const pageRange = getPageRange(page, totalPages)
 
-  /* ── Reset to page 1 when filters change ── */
   function applyFilter(setter) {
     return (e) => {
       setter(e.target.value)

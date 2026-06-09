@@ -1,10 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { authApi } from '../api'
 
-/* ── Context ───────────────────────────────────────────────── */
 const AuthContext = createContext(null)
 
-/* ── Provider ──────────────────────────────────────────────── */
 export function AuthProvider({ children }) {
   const [matchmaker, setMatchmaker] = useState(null)
   const [loading,    setLoading]    = useState(true) // true while checking stored token

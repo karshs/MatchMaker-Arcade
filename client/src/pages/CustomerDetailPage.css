@@ -3,7 +3,6 @@
    Full-page customer dossier — golden-yellow theme
    ============================================================ */
 
-/* ── Shell (shares sidebar from db-shell pattern) ───────────── */
 .cd {
   font-family: 'Geist', 'Inter', sans-serif;
 
@@ -37,7 +36,6 @@
   background: var(--cd-bg);
 }
 
-/* ── Sidebar (reuses same pattern as dashboard) ─────────────── */
 .cd-sidebar {
   width: 220px;
   min-width: 220px;
@@ -133,7 +131,6 @@
   gap: 2px;
 }
 
-/* ── Main area ─────────────────────────────────────────────── */
 .cd-main {
   flex: 1;
   display: flex;
@@ -142,7 +139,6 @@
   overflow: hidden;
 }
 
-/* ── Topbar ────────────────────────────────────────────────── */
 .cd-topbar {
   display: flex;
   align-items: center;
@@ -217,7 +213,6 @@
   object-fit: cover;
 }
 
-/* ── Scrollable canvas ─────────────────────────────────────── */
 .cd-canvas {
   flex: 1;
   overflow-y: auto;
@@ -227,7 +222,6 @@
   gap: 16px;
 }
 
-/* ── Hero card ─────────────────────────────────────────────── */
 .cd-hero {
   background: var(--cd-card);
   border: 1px solid var(--cd-border);
@@ -370,7 +364,6 @@
   font-size: 14px;
 }
 
-/* ── Status Dropdown ──────────────────────────────────────────── */
 .cd-status-dropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -444,7 +437,6 @@
   color: var(--cd-accent);
 }
 
-
 /* Hero meta row */
 .cd-hero-meta {
   display: flex;
@@ -482,7 +474,6 @@
 .cd-meta-value.accent { color: var(--cd-accent); }
 .cd-meta-value.underline { text-decoration: underline; text-decoration-color: var(--cd-accent); cursor: pointer; }
 
-/* ── Tabs ──────────────────────────────────────────────────── */
 .cd-tabs {
   display: flex;
   gap: 0;
@@ -511,7 +502,6 @@
   font-weight: 600;
 }
 
-/* ── Content grid ──────────────────────────────────────────── */
 .cd-grid {
   display: grid;
   grid-template-columns: 1fr 300px;
@@ -522,7 +512,6 @@
 .cd-left  { display: flex; flex-direction: column; gap: 14px; }
 .cd-right { display: flex; flex-direction: column; gap: 14px; }
 
-/* ── Dossier card ──────────────────────────────────────────── */
 .cd-card {
   background: var(--cd-card);
   border: 1px solid var(--cd-border);
@@ -667,7 +656,6 @@
   line-height: 1.6;
 }
 
-/* ── AI / Find Matches button (DO NOT CHANGE COLOURS) ──────── */
 .cd-ai-card {
   position: relative;
   background: var(--cd-ai-bg);
@@ -746,7 +734,6 @@
 
 .cd-ai-btn:hover { opacity: 0.85; }
 
-/* ── Consultant notes card ─────────────────────────────────── */
 .cd-notes-card {
   background: var(--cd-card);
   border: 1px solid var(--cd-border);
@@ -867,7 +854,6 @@
 
 .cd-note-item.secondary .cd-note-text { color: var(--cd-muted); }
 
-/* ── Journey Timeline ──────────────────────────────────────── */
 .cd-timeline-card {
   background: var(--cd-card);
   border: 1px solid var(--cd-border);
@@ -931,7 +917,6 @@
   margin-top: 1px;
 }
 
-/* ── Sent matches section ──────────────────────────────────── */
 .cd-matches-title {
   font-size: 14px;
   font-weight: 700;
@@ -1029,7 +1014,6 @@
   color: var(--cd-text-2);
 }
 
-/* ── Custom scrollbar ──────────────────────────────────────── */
 .cd-canvas::-webkit-scrollbar,
 .cd-notes-log::-webkit-scrollbar {
   width: 4px;
