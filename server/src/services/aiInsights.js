@@ -102,96 +102,22 @@ Return ONLY valid JSON with this exact structure — no extra text, no markdown 
 // Handles both male and female scorer breakdown shapes via normaliseBreakdown().
 
 function generateMock(a, b, score, breakdown) {
-  const nb  = normaliseBreakdown(breakdown);
-  const strengths = [];
-  const concerns  = [];
-
-  // Children preference (both scorers have this key)
-  if (nb.children_preference >= 15)
-    strengths.push(`Both share the same view on children — a critical alignment for long-term compatibility`);
-  else if (nb.children_preference >= 10)
-    strengths.push(`Both are open about children — flexible expectations are a green flag`);
-  else
-    concerns.push(`Different views on children (${safe(a.want_kids, 'unspecified')} vs ${safe(b.want_kids, 'unspecified')}) — needs an early conversation`);
-
-  // Family values (both scorers have this key)
-  const aVals = safe(a.family_values, null);
-  const bVals = safe(b.family_values, null);
-  if (nb.family_values >= 15 && aVals)
-    strengths.push(`Matching ${aVals.toLowerCase()} family values reduces household friction`);
-  else if (nb.family_values < 8 && aVals && bVals)
-    concerns.push(`Different family values (${aVals} vs ${bVals}) — may need compromise`);
-
-  // Languages (present in female scorer; compute from profiles for male scorer)
-  const sharedLangs = (a.languages || []).filter(l => (b.languages || []).includes(l));
-  if (sharedLangs.length > 0)
-    strengths.push(`Shared language(s) — ${sharedLangs.join(', ')} — enables natural communication`);
-
-  // Location / relocation
-  if (nb.location === 10)
-    strengths.push(`Both based in ${safe(a.city, 'the same city')} — no relocation discussions required`);
-  else if (nb.relocation_alignment >= 10)
-    strengths.push(`Both are open to relocation — geographic flexibility is a strong green flag`);
-  else if (nb.location === 0 && nb.relocation_alignment !== null && nb.relocation_alignment < 6)
-    concerns.push(`Different cities (${safe(a.city, 'unknown')} vs ${safe(b.city, 'unknown')}) — relocation willingness must be confirmed`);
-
-  // Male-specific: age gap
-  if (nb.age_gap !== null) {
-    if (nb.age_gap >= 15)
-      strengths.push(`Ideal age difference — ${safe(a.first_name)} is the right amount older for cultural compatibility`);
-    else if (nb.age_gap < 7)
-      concerns.push(`Age gap may raise family expectations — worth discussing early`);
-  }
-
-  // Female-specific: profession compatibility
-  if (nb.profession_compatibility !== null) {
-    if (nb.profession_compatibility >= 12)
-      strengths.push(`Both work in the ${safe(a.employed_in)} sector — shared professional culture and work-life expectations`);
-    else if (nb.profession_compatibility < 8)
-      concerns.push(`Different employment sectors (${safe(a.employed_in, 'unspecified')} vs ${safe(b.employed_in, 'unspecified')}) — lifestyle pace may differ`);
-  }
-
-  // Female-specific: marriage timeline
-  if (nb.marriage_timeline !== null) {
-    if (nb.marriage_timeline >= 10)
-      strengths.push(`Both share the same marriage urgency (${safe(a.marriage_timeline, 'similar timeline')}) — no pressure mismatch`);
-    else if (nb.marriage_timeline < 6)
-      concerns.push(`Different marriage timelines (${safe(a.marriage_timeline, 'unspecified')} vs ${safe(b.marriage_timeline, 'unspecified')}) — the most common early drop-off reason on matrimonial platforms`);
-  }
-
-  // Income (both scorers have this key)
-  if (nb.income >= 8)
-    strengths.push(`Compatible income levels — balanced financial expectations`);
-  else {
-    const aInc = safe(a.annual_income, 'unspecified');
-    const bInc = safe(b.annual_income, 'unspecified');
-    concerns.push(`Income gap (${aInc} vs ${bInc} LPA) — financial conversations recommended`);
-  }
-
-  // Lifestyle (both scorers have this key)
-  if (nb.lifestyle >= 8)
-    strengths.push(`Very compatible lifestyle (diet: ${safe(a.diet, 'similar')}/${safe(b.diet, 'similar')}, no major habit conflicts)`);
-  else if (nb.lifestyle < 4)
-    concerns.push(`Lifestyle differences in diet, smoking, or drinking should be discussed openly`);
-
-  // Pad to minimums so output always looks complete
-  if (strengths.length < 2) strengths.push(`Similar life stage and marriage goals`);
-  if (concerns.length === 0) concerns.push(`Minor adjustment period expected — natural in any new relationship`);
-
-  const label  = getMatchLabel(score);
-  const level  = score >= 75 ? 'Strongly recommended' : score >= 55 ? 'Recommended' : 'Proceed cautiously';
-  const action = score >= 75
-    ? 'Schedule an introductory call at the earliest.'
-    : score >= 55
-    ? 'Share profiles and gauge initial interest before proceeding.'
-    : 'Share profiles to get client feedback before investing further.';
-
+  const isGoodMatch = score >= 70;
+  
   return {
-    summary: `${safe(a.first_name)} and ${safe(b.first_name)} show ${score >= 70 ? 'strong' : score >= 50 ? 'moderate' : 'limited'} compatibility at ${score}/100 (${label}). They align on ${strengths.length} key dimensions. ${score >= 60 ? 'This is a promising match worth pursuing actively.' : 'There are compatibility gaps that need honest discussion first.'}`,
-    strengths: strengths.slice(0, 4),
-    concerns:  concerns.slice(0, 3),
-    recommendation: `${level} — ${action}`,
-    generated_by: 'mock',
+    summary: `AI Insights are currently unavailable (OpenAI key missing or disabled). Based on the raw algorithm, ${safe(a.first_name)} and ${safe(b.first_name)} have a compatibility score of ${Math.round(score)}%.`,
+    strengths: [
+      isGoodMatch ? 'Strong overall algorithmic compatibility.' : 'Some shared baseline traits.',
+      'Profile data verified and active.'
+    ],
+    concerns: [
+      !isGoodMatch ? 'Algorithmic score suggests potential mismatches.' : 'No critical concerns flagged by algorithm.',
+      'Manual review recommended without AI assistance.'
+    ],
+    recommendation: isGoodMatch 
+      ? 'Strongly recommended: Proceed with sharing profiles.' 
+      : 'Proceed cautiously: Review full breakdown before sharing.',
+    generated_by: 'mock'
   };
 }
 
