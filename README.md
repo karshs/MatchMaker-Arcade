@@ -1,4 +1,4 @@
-# MatchMaker Arcade 🎯
+# MatchMaker Arcade 
 
 > Internal CRM Dashboard for professional matchmakers
 
@@ -27,7 +27,7 @@ MatchMaker-Arcade/
 ### Prerequisites
 - Node.js 18+
 - A [Neon DB](https://neon.tech) account (free tier works)
-- An OpenAI API key (optional — mock mode available)
+- An Gemini API key 
 
 ### Backend Setup
 
