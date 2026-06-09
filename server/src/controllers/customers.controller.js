@@ -50,7 +50,10 @@ async function getCustomers(req, res, next) {
 
     const where = conditions.join(' AND ');
     const orderBy = SORT_MAP[sort] || SORT_MAP.last_updated;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
+    
+    const parsedPage = Math.max(1, parseInt(page) || 1);
+    const parsedLimit = Math.max(1, parseInt(limit) || 20);
+    const offset = (parsedPage - 1) * parsedLimit;
 
     // Run count and data queries in parallel for speed
     const [countResult, customers] = await Promise.all([
@@ -66,7 +69,7 @@ async function getCustomers(req, res, next) {
         WHERE ${where}
         ORDER BY ${orderBy}
         LIMIT $${i} OFFSET $${i + 1}`,
-        [...params, parseInt(limit), offset]
+        [...params, parsedLimit, offset]
       ),
     ]);
 
@@ -77,9 +80,9 @@ async function getCustomers(req, res, next) {
       data: customers,
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / parseInt(limit)),
+        page: parsedPage,
+        limit: parsedLimit,
+        totalPages: Math.ceil(total / parsedLimit),
       },
     });
   } catch (err) {
