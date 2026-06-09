@@ -176,8 +176,9 @@ async function updateJourneyStatus(req, res, next) {
   }
 
   // Use a transaction so both updates succeed or both fail together
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     // Get current status before changing it
@@ -209,10 +210,10 @@ async function updateJourneyStatus(req, res, next) {
       data: { from: fromStatus, to: status },
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     next(err);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 

@@ -91,8 +91,9 @@ async function sendMatch(req, res, next) {
   );
   if (both.length < 2) return next(new AppError('One or both customers not found.', 404));
 
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     // Upsert into matches table — if already exists, just update status to Sent
@@ -127,10 +128,10 @@ async function sendMatch(req, res, next) {
       },
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     next(err);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 
