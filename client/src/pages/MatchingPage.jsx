@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { matchesApi } from '../api'
+import { useNotification } from '../context/NotificationContext'
 import './MatchingPage.css'
 
 const DefaultAvatar = ({ className, style = {} }) => (
@@ -193,14 +194,13 @@ export default function MatchingPage() {
   const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState('')
   const [search,        setSearch]        = useState('')
-  const [toastMsg,      setToastMsg]      = useState('')
   const [sentCandidate, setSentCandidate] = useState(null)
+  const { showNotification } = useNotification()
 
   const handleSendSuccess = useCallback((candidate) => {
     setSentCandidate(candidate)
-    setToastMsg('Match recommendation sent successfully.')
-    setTimeout(() => setToastMsg(''), 3000)
-  }, [])
+    showNotification('✓ Match Sent Successfully', '/success_action.wav')
+  }, [showNotification])
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -298,14 +298,6 @@ export default function MatchingPage() {
           {/* Error */}
           {error && (
             <div style={{ padding:'12px 28px', color:'#C62828', fontSize: 13 }}>{error}</div>
-          )}
-
-          {/* Toast */}
-          {toastMsg && (
-            <div className="mp-toast">
-              <span className="ms" style={{ marginRight: 8, fontSize: 18 }}>check_circle</span>
-              {toastMsg}
-            </div>
           )}
 
           {/* Grid */}

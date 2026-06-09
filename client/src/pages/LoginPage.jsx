@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNotification } from '../context/NotificationContext'
 import './LoginPage.css'
 
 /* ── SVG Icons (inline — no extra dependency) ──────────────── */
@@ -56,6 +57,7 @@ export default function LoginPage({ onLogin }) {
   const [password, setPassword] = useState('')
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
+  const { showNotification } = useNotification()
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -70,13 +72,10 @@ export default function LoginPage({ onLogin }) {
     try {
       await onLogin(email.trim(), password)
       
-      // Play premium notification sound on success
-      try {
-        const audio = new Audio('/notification.wav')
-        audio.play()
-      } catch (audioErr) {
-        // Silently ignore if browser blocks auto-play
-      }
+      // Delay global notification so it syncs with the dashboard rendering
+      setTimeout(() => {
+        showNotification('✓ Welcome back, Matchmaker Admin')
+      }, 500)
       
       // Navigation handled by App.jsx after onLogin resolves
     } catch (err) {
