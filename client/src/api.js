@@ -93,6 +93,12 @@ export const matchesApi = {
     request('POST', `/customers/${customerId}/matches/${matchId}/send`, { score }),
 };
 
+export const aiApi = {
+  /** POST /api/ai/insights */
+  getInsights: (customerAId, customerBId) =>
+    request('POST', '/ai/insights', { customer_id: customerAId, match_customer_id: customerBId }),
+};
+
 export const notesApi = {
   /** GET /api/customers/:id/notes */
   list: (customerId) => request('GET', `/customers/${customerId}/notes`),

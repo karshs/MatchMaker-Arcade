@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { matchesApi } from '../api'
+import { matchesApi, aiApi } from '../api'
 import { useNotification } from '../context/NotificationContext'
 import './MatchingPage.css'
 
@@ -43,6 +43,9 @@ function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
 
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showAI,           setShowAI]           = useState(false)
+  const [aiData,           setAiData]           = useState(null)
+  const [aiLoading,        setAiLoading]        = useState(false)
+  const [aiError,          setAiError]          = useState('')
   const [sent,             setSent]             = useState(false)
   const [sending,          setSending]          = useState(false)
   const [barWidth,         setBarWidth]         = useState(0)
@@ -51,6 +54,21 @@ function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
     const t = setTimeout(() => setBarWidth(candidate.compatibility_score), 150)
     return () => clearTimeout(t)
   }, [candidate.compatibility_score])
+
+  async function handleAI() {
+    setShowAI(true)
+    if (aiData || aiLoading) return
+    setAiLoading(true)
+    setAiError('')
+    try {
+      const res = await aiApi.getInsights(customerId, candidate.id)
+      setAiData(res.data)
+    } catch (err) {
+      setAiError(err.message || 'Failed to load AI Insights.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   async function handleSend() {
     if (sent || sending) return
@@ -141,7 +159,7 @@ function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
 
       {/* Actions */}
       <div className="mp-actions">
-        <button className="mp-ai-btn" id={`ai-btn-${candidate.id}`} onClick={() => setShowAI(true)}>
+        <button className="mp-ai-btn" id={`ai-btn-${candidate.id}`} onClick={handleAI}>
           <span className="ms">psychology</span>AI Insights
         </button>
         <button
@@ -163,14 +181,38 @@ function MatchCard({ candidate, customerId, customerName, onSendSuccess }) {
             <span className="ms">close</span>
           </button>
         </div>
-        <p className="mp-ai-overlay-text">
-          {candidate.first_name} is a {tierLabel.toLowerCase()} for this client with a compatibility score of{' '}
-          {Math.round(candidate.compatibility_score)}%.
-          {candidate.education ? ` Education: ${candidate.education}.` : ''}
-          {candidate.want_kids !== undefined ? ` Wants kids: ${candidate.want_kids ? 'Yes' : 'No'}.` : ''}
-          {candidate.languages?.length ? ` Languages: ${candidate.languages.join(', ')}.` : ''}
-          {candidate.family_values ? ` Family values: ${candidate.family_values}.` : ''}
-        </p>
+        <div className="mp-ai-overlay-body" style={{ padding: '0 24px 24px', overflowY: 'auto', maxHeight: 'calc(100% - 60px)' }}>
+          {aiLoading && <div style={{ color: '#666', marginTop: 10 }}>Analyzing profile data...</div>}
+          {aiError && <div style={{ color: '#D32F2F', marginTop: 10 }}>{aiError}</div>}
+          {!aiLoading && !aiError && aiData && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ lineHeight: '1.5', marginBottom: 16 }}>{aiData.summary}</p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                <div style={{ background: '#f0fdf4', padding: '12px 16px', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                  <div style={{ color: '#166534', fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="ms" style={{ fontSize: 18 }}>check_circle</span> Strengths
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 20, color: '#15803d', fontSize: 14, lineHeight: 1.4 }}>
+                    {aiData.strengths?.map((s, i) => <li key={i} style={{ marginBottom: 6 }}>{s}</li>)}
+                  </ul>
+                </div>
+                <div style={{ background: '#fef2f2', padding: '12px 16px', borderRadius: 8, border: '1px solid #fecaca' }}>
+                  <div style={{ color: '#991b1b', fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="ms" style={{ fontSize: 18 }}>warning</span> Areas to Explore
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 20, color: '#b91c1c', fontSize: 14, lineHeight: 1.4 }}>
+                    {aiData.concerns?.map((c, i) => <li key={i} style={{ marginBottom: 6 }}>{c}</li>)}
+                  </ul>
+                </div>
+              </div>
+              
+              <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14 }}>
+                <strong style={{ color: '#334155' }}>Recommendation:</strong> <span style={{ color: '#475569' }}>{aiData.recommendation}</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
