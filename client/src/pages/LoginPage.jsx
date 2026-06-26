@@ -83,6 +83,23 @@ export default function LoginPage({ onLogin }) {
     }
   }
 
+  async function handleGuestLogin() {
+    setEmail('demo@thedatecrew.com')
+    setPassword('demo123')
+    setError('')
+    setLoading(true)
+    try {
+      await onLogin('demo@thedatecrew.com', 'demo123')
+      setTimeout(() => {
+        showNotification('✓ Logged in as Guest')
+      }, 500)
+    } catch (err) {
+      setError('Guest login failed. Ensure server .env has ADMIN_EMAIL=demo@thedatecrew.com and ADMIN_PASSWORD=demo123.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="login-page">
       <div className="login-card">
@@ -143,6 +160,16 @@ export default function LoginPage({ onLogin }) {
           >
             {loading ? 'Signing In…' : 'Sign In'}
             {!loading && <ArrowIcon />}
+          </button>
+          
+          <button
+            id="login-guest-btn"
+            className="login-btn-secondary"
+            type="button"
+            onClick={handleGuestLogin}
+            disabled={loading}
+          >
+            Login as Guest
           </button>
         </form>
 
